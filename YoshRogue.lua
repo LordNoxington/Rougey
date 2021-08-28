@@ -5,7 +5,6 @@
 --incoming Death coil -> Vanish using Missiles DONEEE
 --add faster shiv on melee class DONE
 --Add Nigh Invulnerability belt usage DONE
---ADD BLIND UNIT WHEN THEY TRINKET!!!
 --Add /stop attack and stealth if warrior has crippling
 --Add kicks for specific spells
 local Tinkr = ...
@@ -464,7 +463,7 @@ Routine:RegisterRoutine(function()
       end 
       --for i, object in ipairs(Objects()) do
       for object in OM:Objects(OM.Types.Units) do
-        if (ObjectType(object) == 4 or ObjectType(object) == 5 or ObjectType(object) == 3) and UnitCanAttack("player",object) and UnitAffectingCombat("player") and melee() and (isCasting(object) or isChanneling(object)) then
+        if (ObjectType(object) == 3 or ObjectType(object) == 4 or ObjectType(object) == 5) and UnitCanAttack("player",object) and UnitAffectingCombat("player") and melee() then
           if isCasting(object) then
             local _, _, _, _, endTime, _, _, _ = UnitCastingInfo(object);
             local finish = endTime/1000 - GetTime()
@@ -478,7 +477,7 @@ Routine:RegisterRoutine(function()
             end 
           end 
           if isChanneling(object) then
-            local _, _, _, startTime, _, _, _, _ = UnitChannelInfo(object);
+            local _, _, _, startTime = UnitChannelInfo(object);
             local startTime = startTime/1000 - GetTime()
             if startTime <= 1 and castable(Kick,object) and melee() then
               cast(Kick,object)
@@ -556,7 +555,7 @@ Routine:RegisterRoutine(function()
 
   local function Opener()
     if UnitCanAttack("player","target") and melee() then
-      if buff(Stealth,"player") then
+      if buff(Stealth,"player") or buff(Vanish,"player") and UnitPower("player") >= 60 then
         if not IsBehind("target") then
           if wowex.wowexStorage.read("openerfrontal") == "Cheap Shot" and castable(CheapShot) then
             cast(CheapShot,"target")
@@ -595,7 +594,7 @@ Routine:RegisterRoutine(function()
         --Dismount()
         Eval('StartAttack()', 't')
       end
-      if castable(SliceAndDice) and GetComboPoints <= 0 and not buff(SliceAndDice,"player") and distance("player","target") <= 20 and UnitPower("player") >= 60 and not (isCasting("target") or isChanneling("target")) then
+      if castable(SliceAndDice) and GetComboPoints <= 0 and not buff(SliceAndDice,"player") and distance("player","target") <= 20 and UnitPower("player") >= 40 and not (isCasting("target") or isChanneling("target")) then
         TargetLastTarget()
         --if not UnitIsDeadOrGhost("target") and GetComboPoints >= 1 then
           cast(SliceAndDice)
@@ -659,7 +658,7 @@ Routine:RegisterRoutine(function()
         cast(KidneyShot, "target")
         Debug("Kidney to Chain Silence on " .. UnitName("target"), 8643)
       end
-      if castable(Eviscerate, "target") and GetComboPoints >= 3 and UnitHealth("target") <= 15 then
+      if castable(Eviscerate, "target") and GetComboPoints >= 3 and UnitHealth("target") <= 10 then
         cast(Eviscerate, "target")
         Debug("Execute on " .. UnitName("target"), 26865)
       end
@@ -685,7 +684,7 @@ Routine:RegisterRoutine(function()
       --if castable(SliceAndDice, 'target') and GetComboPoints >= 2 and buffduration(SliceAndDice, 'player') <= 1 then
       --  return cast(SliceAndDice, 'target')
       --end
-      if castable(Eviscerate, "target") and GetComboPoints >= 4 and not castable(KidneyShot, "target") and cooldown(KidneyShot) > 3 then
+      if castable(Eviscerate, "target") and GetComboPoints >= 4 and not castable(KidneyShot, "target") and cooldown(KidneyShot) > 2 then
         cast(Eviscerate, "target")
       end
     end
