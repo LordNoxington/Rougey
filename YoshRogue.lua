@@ -13,7 +13,7 @@ local Routine = Tinkr.Routine
 local Util = Tinkr.Util
 local Draw = Tinkr.Util.Draw:New()
 local Common = Tinkr.Common
-local ObjectManager = Tinkr.Util.ObjectManager
+local OM = Tinkr.Util.ObjectManager
 local E = Tinkr:require('Routine.Modules.Exports')
 local lastdebugmsg = ""
 local lastdebugtime = 0
@@ -453,7 +453,7 @@ Routine:RegisterRoutine(function()
         local spellId, spellName, _, _, _, _, _, _, _, _, _, _, _ = select(12, ...)
         if spellName == "Fear" or spellName == "Polymorph" or spellName == "Regrowth" or spellId == 25235 or spellName == "Cyclone" then
           --for i, object in ipairs(Objects()) do
-          for object in ObjectManager:Objects(OM.Types.Units) do
+          for object in OM:Objects(OM.Types.Units) do
             if sourceName == ObjectName(object) then
               if (ObjectType(object) == 4 or ObjectType(object) == 5) and UnitCanAttack("player",object) then
                 if castable(Shadowstep,object) and cansee("player",object) and not buff(Stealth,"player") and UnitPower("player") >= 25 then
@@ -497,7 +497,7 @@ Routine:RegisterRoutine(function()
         kickNameplate(Kick, true)
       end 
       --for i, object in ipairs(Objects()) do
-      for object in ObjectManager:Objects(OM.Types.Units) do
+      for object in OM:Objects(OM.Types.Units) do
         if (ObjectType(object) == 3 or ObjectType(object) == 4 or ObjectType(object) == 5) and UnitCanAttack("player",object) and UnitAffectingCombat("player")  then
           if isCasting(object) then
             local _, _, _, _, endTime, _, _, _ = UnitCastingInfo(object);
@@ -890,7 +890,7 @@ Routine:RegisterRoutine(function()
       cast(Stealth)
     end
     --for i, object in ipairs(Objects()) do
-    for object in ObjectManager:Objects(OM.Types.Units) do
+    for object in OM:Objects(OM.Types.Units) do
       if (ObjectType(object) == 4 or ObjectType(object) == 5) and UnitCanAttack("player",object) then
         if buff(Stealth,object) then
           if buff(Stealth,"player") and distance("player",object) <= 20 then
