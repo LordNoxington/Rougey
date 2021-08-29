@@ -457,6 +457,7 @@ Routine:RegisterRoutine(function()
                 if castable(Shadowstep,object) and cansee("player",object) and not buff(Stealth,"player") and UnitPower("player") >= 25 and distance("player",object) >= 12 then
                   cast(Shadowstep,object)
                   FaceObject(object)
+                  MoveForwardStop()
                   Debug("Shadowstep on " .. ObjectName(object),38768)
                   kickNameplate(Kick, true)
                 end
