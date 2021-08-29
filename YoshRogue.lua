@@ -333,7 +333,7 @@ Routine:RegisterRoutine(function()
       end
     end
   end
-  --[[
+  
   local function Execute()
     --*Eviscerate=Attack Power * (Number of Combo Points used * 0.03) * abitrary multiplier to account for Auto Attacks while pooling
     local e1, e2, e3, e4, e5 = GetFinisherMaxDamage("Eviscerate")
@@ -344,7 +344,6 @@ Routine:RegisterRoutine(function()
     local evisc3calculated = ap * (3 * 0.03) + e3 * multiplier
     local evisc4calculated = ap * (4 * 0.03) + e4 * multiplier
     if not UnitIsPlayer("target") and castable(Eviscerate) then
-      --not UnitIsPlayer("target") and
       if UnitHealth("target") <= evisc1calculated and GetComboPoints == 1 then
         cast(Eviscerate)
       end
@@ -362,7 +361,7 @@ Routine:RegisterRoutine(function()
       end
     end
   end
-  ]]
+  
   local function Defensives()
     if UnitAffectingCombat("player") and not mounted() then
       --if mounted() then
@@ -940,7 +939,7 @@ Routine:RegisterRoutine(function()
     if f:COMBAT_LOG_EVENT_UNFILTERED() then return true end
     --if trinket:UNIT_SPELLCAST_SUCCEEDED() then return true end
     if Cooldowns() then return true end
-    --if Execute() then return true end
+    if Execute() then return true end
     if pvp() then return true end
     if Opener() then return true end
     if Dps() then return true end
