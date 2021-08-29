@@ -418,15 +418,15 @@ Routine:RegisterRoutine(function()
 
     if subevent == "SPELL_CAST_SUCCESS" then
       local spellId, spellName, _, _, _, _, _, _, _, _, _, _, _ = select(12, ...)
-      if destName == "Noxu" and spellName == "Scatter Shot" and castable(Vanish) then
+      if destName == UnitName("player") and spellName == "Scatter Shot" and castable(Vanish) then
         cast(Vanish)
         Debug("Vanishing Scatter Shot!! ",19503)
       end
-      if destName == "Noxu" and spellName == "Hammer of Justice" and castable(Vanish) then
+      if destName == UnitName("player") and spellName == "Hammer of Justice" and castable(Vanish) then
         cast(Vanish)
         Debug("Vanishing Hammer of Justice!! ",853)
       end
-      if destName == "Noxu" and spellName == "Death Coil" then
+      if destName == UnitName("player") and spellName == "Death Coil" then
         if castable(Vanish) then
           cast(Vanish)
           Debug("Vanishing Death Coil!! ",27223)
@@ -435,7 +435,7 @@ Routine:RegisterRoutine(function()
           Debug("Cloaking Death Coil!! ",27223)
         end
       end
-      if destName == "Noxu" and spellName == "Pyroblast" then
+      if destName == UnitName("player") and spellName == "Pyroblast" then
         if castable(Vanish) then
           cast(Vanish)
           Debug("Vanishing Pyroblast!! ",33938)
@@ -588,7 +588,7 @@ Routine:RegisterRoutine(function()
   ]]
 
   local function Opener()
-    if UnitCanAttack("player","target") and melee() then
+    if UnitCanAttack("player","target") then
       if buff(Stealth,"player") or buff(Vanish,"player")then
         if not IsBehind("target") then
           if wowex.wowexStorage.read("openerfrontal") == "Cheap Shot" and castable(CheapShot) then
@@ -688,7 +688,7 @@ Routine:RegisterRoutine(function()
         cast(KidneyShot, "target")
         Debug("Kidney to Chain Silence on " .. UnitName("target"), 8643)
       end
-      if castable(Eviscerate, "target") and GetComboPoints >= 3 and UnitHealth("target") <= 10 then
+      if castable(Eviscerate, "target") and GetComboPoints >= 3 and UnitHealth("target") <= 20 then
         cast(Eviscerate, "target")
         Debug("Execute on " .. UnitName("target"), 26865)
       end
