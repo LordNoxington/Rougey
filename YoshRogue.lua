@@ -343,21 +343,28 @@ Routine:RegisterRoutine(function()
     local evisc2calculated = ap * (2 * 0.03) + e2 * multiplier
     local evisc3calculated = ap * (3 * 0.03) + e3 * multiplier
     local evisc4calculated = ap * (4 * 0.03) + e4 * multiplier
+    local evisc5calculated = ap * (5 * 0.03) + e5 * multiplier
+
     if not UnitIsPlayer("target") and castable(Eviscerate) then
       if UnitHealth("target") <= evisc1calculated and GetComboPoints == 1 then
         cast(Eviscerate)
+        Debug("Calculated Execute on " .. UnitName("target"), 26865)
       end
       if UnitHealth("target") <= evisc2calculated and GetComboPoints == 2 then
         cast(Eviscerate)
+        Debug("Calculated Execute on " .. UnitName("target"), 26865)
       end
       if UnitHealth("target") <= evisc3calculated and GetComboPoints == 3 then
         cast(Eviscerate)
+        Debug("Calculated Execute on " .. UnitName("target"), 26865)
       end
       if UnitHealth("target") <= evisc4calculated and GetComboPoints == 4 then
         cast(Eviscerate)
+        Debug("Calculated Execute on " .. UnitName("target"), 26865)
       end
-      if GetComboPoints == 5 then
+      if UnitHealth("target") <= evisc5calculated and GetComboPoints == 5 then
         cast(Eviscerate)
+        Debug("Calculated Execute on " .. UnitName("target"), 26865)
       end
     end
   end
@@ -693,7 +700,7 @@ Routine:RegisterRoutine(function()
         cast(KidneyShot, "target")
         Debug("Kidney to Chain Silence on " .. UnitName("target"), 8643)
       end
-      if castable(Eviscerate, "target") and GetComboPoints >= 3 and UnitHealth("target") <= 20 then
+      if castable(Eviscerate, "target") and GetComboPoints >= 3 and UnitHealth("target") <= 20 and not UnitIsPlayer("target") then
         cast(Eviscerate, "target")
         Debug("Execute on " .. UnitName("target"), 26865)
       end
