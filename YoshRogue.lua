@@ -418,15 +418,16 @@ Routine:RegisterRoutine(function()
 
     if subevent == "SPELL_CAST_SUCCESS" then
       local spellId, spellName, _, _, _, _, _, _, _, _, _, _, _ = select(12, ...)
-      if destName == UnitName("player") and spellName == "Scatter Shot" and castable(Vanish) then
+      local myname = UnitName("player")
+      if destName == myname and spellName == "Scatter Shot" and castable(Vanish) then
         cast(Vanish)
         Debug("Vanishing Scatter Shot!! ",19503)
       end
-      if destName == UnitName("player") and spellName == "Hammer of Justice" and castable(Vanish) then
+      if destName == myname and spellName == "Hammer of Justice" and castable(Vanish) then
         cast(Vanish)
         Debug("Vanishing Hammer of Justice!! ",853)
       end
-      if destName == UnitName("player") and spellName == "Death Coil" then
+      if destName == myname and spellName == "Death Coil" then
         if castable(Vanish) then
           cast(Vanish)
           Debug("Vanishing Death Coil!! ",27223)
@@ -435,7 +436,7 @@ Routine:RegisterRoutine(function()
           Debug("Cloaking Death Coil!! ",27223)
         end
       end
-      if destName == UnitName("player") and spellName == "Pyroblast" then
+      if destName == myname and spellName == "Pyroblast" then
         if castable(Vanish) then
           cast(Vanish)
           Debug("Vanishing Pyroblast!! ",33938)
