@@ -108,7 +108,7 @@ Draw:Sync(function(draw)
   --draw:Circle(px, py, pz, combatReach)
 
   local rotation = ObjectRotation("player")
-  local rx, ry, rz = RotateVector(px, py, pz, rotation, playerRadius);
+  --local rx, ry, rz = RotateVector(px, py, pz, rotation, playerRadius);
 
   --draw:Line(px, py, pz, rx, ry, rz)
 
@@ -498,7 +498,7 @@ Routine:RegisterRoutine(function()
       end 
       --for i, object in ipairs(Objects()) do
       for object in OM:Objects(OM.Types.Units) do
-        if (ObjectType(object) == 3 or ObjectType(object) == 4 or ObjectType(object) == 5) and UnitCanAttack("player",object) and UnitAffectingCombat("player") and melee() then
+        if (ObjectType(object) == 3 or ObjectType(object) == 4 or ObjectType(object) == 5) and UnitCanAttack("player",object) and UnitAffectingCombat("player")  then
           if isCasting(object) then
             local _, _, _, _, endTime, _, _, _ = UnitCastingInfo(object);
             local finish = endTime/1000 - GetTime()
@@ -770,7 +770,7 @@ Routine:RegisterRoutine(function()
       --end
       --Cast Hemorrhage if its known
       --if IsSpellKnown(26864) then 
-        if castable(Shiv, "target") and melee() and not debuff(11201,"target") and not buff(34471, "target") and not buff(31224, "target") and not buff(20594, "target") and not debuff(27187, "target") and not debuff(CheapShot, "target") and not debuff(KidneyShot, "taret") and GetComboPoints < 5 and moving("target") and not buff(2893, "target") and (debuff(26864, "target") or fillerclass == "Rogue" or fillerclass == "Warrior" or fillerclass == "Shaman") --[[and debuff(26864 hemo, "target")]] then
+        if castable(Shiv, "target") and melee() and not debuff(11201,"target") and not buff(34471, "target") and not buff(31224, "target") and not buff(20594, "target") and not debuff(27187, "target") and not debuff(CheapShot, "target") and not debuff(KidneyShot, "taret") and GetComboPoints < 5 and moving("target") and (debuff(26864, "target") or fillerclass == "Rogue" or fillerclass == "Warrior" or fillerclass == "Shaman") --[[and debuff(26864 hemo, "target")]] then
           --and UnitPower("player") >= 60
           Dismount()
           cast(Shiv, "target")
