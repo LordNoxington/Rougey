@@ -367,10 +367,9 @@ Routine:RegisterRoutine(function()
       --if mounted() then
       --  Dismount()
       --end
-      if castable(Sprint) and (debuff(18223,"player") or debuff(25365,"player") or debuff(27088,"player") or debuff(122,"player") or debuff(12494,"player")) and health() <= 95 then
-        cast(Sprint)
-      end
-
+      --if castable(Sprint) and (debuff(18223,"player") or debuff(25365,"player") or debuff(27088,"player") or debuff(122,"player") or debuff(12494,"player")) and health() <= 95 then
+      --  cast(Sprint)
+      --end
       if health() <= 30 and not buff(30458, "player") then
         Eval('RunMacroText("/use 6")', 'player')
       end
@@ -455,9 +454,11 @@ Routine:RegisterRoutine(function()
           for object in OM:Objects(OM.Types.Units) do
             if sourceName == ObjectName(object) then
               if (ObjectType(object) == 4 or ObjectType(object) == 5) and UnitCanAttack("player",object) then
-                if castable(Shadowstep,object) and cansee("player",object) and not buff(Stealth,"player") and UnitPower("player") >= 25 then
+                if castable(Shadowstep,object) and cansee("player",object) and not buff(Stealth,"player") and UnitPower("player") >= 25 and distance("player",object) >= 12 then
                   cast(Shadowstep,object)
+                  FaceObject(object)
                   Debug("Shadowstep on " .. ObjectName(object),38768)
+                  kickNameplate(Kick, true)
                 end
                 --if casting(object) and not buff(Stealth,"player") then
                 --  cast(Kick,object)
@@ -466,6 +467,9 @@ Routine:RegisterRoutine(function()
                     --Eval('RunMacroText("/cast Kick")', 'target')
                     --cast(Shadowstep,object)
                 --end
+                if buff(36554,"player") then
+                  kickNameplate(Kick, true)
+                end 
               end
             end
           end
@@ -1049,11 +1053,11 @@ local mytable = {
         
         { key = "heading", type = "heading", color = 'FFF468', text = "Execute" },
         { key = "personalmultiplier", type = "slider", text = "Execute Multiplier", label = "Execute Multiplier", min = 1, max = 3, step = 0.1 },
-        { key = "heading", type = "heading", color = 'FFF468', text = "Opener" },
-        { key = "openerfrontal", width = 175, label = "Frontal", text = wowex.wowexStorage.read("openerfrontal"), type = "dropdown",
-        options = {"Cheap Shot", "None",} },
-        { key = "openerbehind", width = 175, label = "Behind", text = wowex.wowexStorage.read("openerbehind"), type = "dropdown",
-        options = {"Ambush", "Cheap Shot", "Garrote","None"} },
+        --{ key = "heading", type = "heading", color = 'FFF468', text = "Opener" },
+        --{ key = "openerfrontal", width = 175, label = "Frontal", text = wowex.wowexStorage.read("openerfrontal"), type = "dropdown",
+        --options = {"Cheap Shot", "None",} },
+        --{ key = "openerbehind", width = 175, label = "Behind", text = wowex.wowexStorage.read("openerbehind"), type = "dropdown",
+        --options = {"Ambush", "Cheap Shot", "Garrote","None"} },
         --{ key = "pershealwavepercent", type = "slider", text = "Healing Wave", label = "Healing Wave at", min = 1, max = 100, step = 1 },
         
       },
