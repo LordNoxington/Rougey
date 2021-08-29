@@ -139,6 +139,8 @@ Draw:Sync(function(draw)
       end
     end
   end
+end)
+
   --[[
   for i, object in ipairs(Objects()) do
     if UnitCanAttack("player",object) and UnitTargetingUnit(object,'player') then
@@ -165,7 +167,39 @@ Draw:Sync(function(draw)
     end 
   end
   ]]
-end)
+
+--[[
+function Draw:WorldToScreen(wx, wy, wz)
+function Draw:CameraPosition()
+function Draw:Map(value, fromLow, fromHigh, toLow, toHigh)
+function Draw:SetColor(r, g, b, a)
+function Draw:SetColorRaw(r, g, b, a)
+function Draw:SetAlpha(a)
+function Draw:Distance(ax, ay, az, bx, by, bz)
+function Draw:Distance2D(x1, y1, x2, y2)
+function Draw:SetWidth(width)
+function Draw:RotateX(cx, cy, cz, px, py, pz, r)
+function Draw:RotateY(cx, cy, cz, px, py, pz, r)
+function Draw:RotateZ(cx, cy, cz, px, py, pz, r)
+function Draw:Line(x1, y1, z1, x2, y2, z2, maxD)
+function Draw:LineRaw(x1, y1, z1, x2, y2, z2)
+function Draw:Line2D(sx, sy, ex, ey)
+function Draw:Circle(x, y, z, radius)
+function Draw:Cylinder(x, y, z, radius, height)
+function Draw:Array(vectors, x, y, z, rotationX, rotationY, rotationZ)
+function Draw:Text(text, font, x, y, z)
+function Draw:Texture(config, x, y, z, alphaA)
+function Draw:ClearCanvas()
+function Draw:Update()
+function Draw:Helper()
+function Draw:Enable()
+function Draw:Disable()
+function Draw:Enabled()
+function Draw:Sync(callback)
+function Draw:HexToRGB(hex)
+function Draw:SetColorFromObject(object)
+function Draw:New()
+]]
 
 local function Debug(text,spellid)
   if (lastdebugmsg ~= message or lastdebugtime < GetTime()) then
@@ -220,11 +254,11 @@ else
 end
 
 Routine:RegisterRoutine(function()
+  if wowex.keystate() then return end
   local GetComboPoints = GetComboPoints("player","target")
   --local mainHandLink = GetInventoryItemLink("player", GetInventorySlotInfo("MainHandSlot"))
   --local _, _, _, _, _, _, itemType5 = GetItemInfo(mainHandLink)
   --if gcd() > latency() then return end
-  if wowex.keystate() then return end
   if UnitIsDeadOrGhost("player") or debuffduration(Gouge,"target") > 0.3 or debuffduration(Sap,"target") > 0.3 or debuff(Cyclone,"target") or debuffduration(Blind,"target") > 0.3 or debuff(12826,"target") or buff(45438, "target") then return end
   -- or buff(Vanish,"player")
   local function InventorySlots()
@@ -421,7 +455,7 @@ Routine:RegisterRoutine(function()
           for object in OM:Objects(OM.Types.Units) do
             if sourceName == ObjectName(object) then
               if (ObjectType(object) == 4 or ObjectType(object) == 5) and UnitCanAttack("player",object) then
-                if castable(Shadowstep,object) and cansee("player",object) and not buff(Stealth,"player") then
+                if castable(Shadowstep,object) and cansee("player",object) and not buff(Stealth,"player") and UnitPower("player") >= 25 then
                   cast(Shadowstep,object)
                   Debug("Shadowstep on " .. ObjectName(object),38768)
                 end
@@ -483,7 +517,7 @@ Routine:RegisterRoutine(function()
               cast(Kick,object)
               Debug("Kicked " .. UnitName(object) .. " at " .. startTime,38768)
             end
-            if startTime <= 1 and castable(Gouge,object) and not castable(Kick,object) then
+            if startTime <= 1 and castable(Gouge,object) and not IsBehind(object) and not castable(Kick,object) then
               cast(Gouge,object)
               Debug("Gouged " .. UnitName(object) .. " at " .. startTime,38764)
             end 
@@ -555,7 +589,7 @@ Routine:RegisterRoutine(function()
 
   local function Opener()
     if UnitCanAttack("player","target") and melee() then
-      if buff(Stealth,"player") or buff(Vanish,"player") and UnitPower("player") >= 60 then
+      if buff(Stealth,"player") or buff(Vanish,"player")then
         if not IsBehind("target") then
           if wowex.wowexStorage.read("openerfrontal") == "Cheap Shot" and castable(CheapShot) then
             cast(CheapShot,"target")
@@ -601,10 +635,6 @@ Routine:RegisterRoutine(function()
           Debug("Slice and Dice on target change", 6774)
           TargetLastTarget()
         --end
-      end
-      if castable(Rupture, "target") and GetComboPoints >= 4 and UnitPowerType("target") ~= 0 and UnitHealth("target") >= 60 and class == "Rogue" and not debuff(26867, "target") then
-        cast(Rupture, "target")
-        Debug("Rupture early on " .. UnitName("target"), 38764)
       end
       if debuff(CheapShot, "target") and not IsBehind("target") and castable(Gouge, "target") and debuffduration(1833, "target") < 0.3 then
         --for i=1,40 do
@@ -665,6 +695,10 @@ Routine:RegisterRoutine(function()
       if castable(KidneyShot, "target") and GetComboPoints >= 1 and not debuff(1833, "target") and not debuff(1330, "target") and not debuff(18469, "target") and not buff(34471, "target") and isCasting("target") and UnitHealth("target") <= 15 then
         cast(KidneyShot, "target")
         Debug("Kidney to Interrupt on " .. UnitName("target"), 8643)
+      end
+      if castable(Rupture, "target") and GetComboPoints >= 4 and UnitPowerType("target") ~= 0 and UnitHealth("target") >= 60 and class == "Rogue" and not debuff(26867, "target") then
+        cast(Rupture, "target")
+        Debug("Rupture early on " .. UnitName("target"), 38764)
       end
       if castable(26679, "target") and distance("player","target") >= 30 and GetComboPoints >= 1 and not castable(Shadowstep, "target") and (isCasting("target") or isChanneling("target")) then
         cast(26679, "target")
