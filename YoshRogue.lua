@@ -7,6 +7,8 @@
 --Add Nigh Invulnerability belt usage DONE
 --Add /stop attack and stealth if warrior has crippling
 --Add kicks for specific spells
+--Add Blinds for objects that aren't your target, and target is <= 30% health
+--Don't overlap kick with kidney shop... Track kick interrupt?
 local Tinkr = ...
 local wowex = {}
 local Routine = Tinkr.Routine
@@ -257,7 +259,7 @@ Routine:RegisterRoutine(function()
   local GetComboPoints = GetComboPoints("player","target")
   --local mainHandLink = GetInventoryItemLink("player", GetInventorySlotInfo("MainHandSlot"))
   --local _, _, _, _, _, _, itemType5 = GetItemInfo(mainHandLink)
-  --if gcd() > latency() then return end
+  if gcd() > latency() then return end
   if wowex.keystate() then return end
   if UnitIsDeadOrGhost("player") or debuffduration(Gouge,"target") > 0.3 or debuffduration(Sap,"target") > 0.3 or debuff(Cyclone,"target") or debuffduration(Blind,"target") > 0.3 or debuff(12826,"target") or buff(45438, "target") then return end
   -- or buff(Vanish,"player")
@@ -461,7 +463,7 @@ Routine:RegisterRoutine(function()
           for object in OM:Objects(OM.Types.Units) do
             if sourceName == ObjectName(object) then
               if (ObjectType(object) == 4 or ObjectType(object) == 5) and UnitCanAttack("player",object) then
-                if castable(Shadowstep,object) and cansee("player",object) and not buff(Stealth,"player") and UnitPower("player") >= 25 and distance("player",object) >= 12 then
+                if castable(Shadowstep,object) and cansee("player",object) and not buff(Stealth,"player") and UnitPower("player") >= 25 and (distance("player",object) >= 15 or not UnitTargetingUnit("player",object)) then
                   cast(Shadowstep,object)
                   FaceObject(object)
                   MoveForwardStop()
@@ -481,6 +483,13 @@ Routine:RegisterRoutine(function()
               end
             end
           end
+        end
+      end
+      if subevent == "SPELL_INTERRUPT" then
+        local kicktime = GetTime()
+        local spellId, spellName, _, _, _, _, _, _, _, _, _, _, _ = select(12, ...)
+        if spellName == "Kick" and sourceName == UnitName("player") and destName == UnitName("target") then
+          kickInterrupt = kicktime + 5
         end
       end
     end
@@ -560,6 +569,18 @@ Routine:RegisterRoutine(function()
         Debug("Sprint used on " .. UnitName("player"), 11305)
       end
     end
+    --Blind on
+    if castable(Blind) and UnitHealth("target") <= 30 then
+      for object in OM:Objects(OM.Types.Units) do
+        if (ObjectType(object) == 4 or ObjectType(object) == 5) and UnitCanAttack("player",object) then
+          if UnitTargetingUnit(object,"target") and not UnitTargetingUnit("player",object) and not IsPoisoned(object) then
+            cast(Blind,object)
+          elseif UnitTargetingUnit(object,"player") and not UnitTargetingUnit("player",object) and not IsPoisoned(object) then
+            cast(Blind,object)
+          end 
+        end 
+      end
+    end
   end
 --[[
   local function Opener()
@@ -624,6 +645,10 @@ Routine:RegisterRoutine(function()
   local function Dps()
     if UnitAffectingCombat("player") and UnitExists("target") and UnitCanAttack("player","target") and not buff(Stealth,"player") then
       local class, _, _ = UnitClass("target")
+      local kidneydelay
+      if kickInterrupt ~= nil then
+        kidneydelay = kickInterrupt - GetTime()
+      end
       --if mounted() then
       --  Dismount()
       --end
@@ -717,7 +742,7 @@ Routine:RegisterRoutine(function()
         Debug("Deadly Throw to Interrupt on " .. UnitName("target"), 26679)
       end
       --Test until replacement copied from cutegirl
-      if castable(KidneyShot, "target") and GetComboPoints >= 4 and not debuff(KidneyShot, "target") and not debuff(1833, "target") and not debuff(1330, "target") and not debuff(18469, "target") and not buff(34471, "target") then
+      if castable(KidneyShot, "target") and GetComboPoints >= 4 and not debuff(KidneyShot, "target") and not debuff(1833, "target") and not debuff(1330, "target") and not debuff(18469, "target") and not buff(34471, "target") and (kidneydelay == nil or kidneydelay <= 0.2) then
         cast(KidneyShot, "target")
         Debug("BIG Kidney on " .. UnitName("target"), 8643)
       end
