@@ -60,34 +60,50 @@ Tinkr:require('scripts.cromulon.interface.uibuilder' , wowex)
 Tinkr:require('scripts.cromulon.interface.buttons' , wowex)
 Tinkr:require('scripts.cromulon.interface.panels' , wowex)
 Tinkr:require('scripts.cromulon.interface.minimap' , wowex)
---[[     {
-    Object = 0,
-    Item = 1,
-    Container = 2,
-    Unit = 3,
-    Player = 4,
-    ActivePlayer = 5,
-    GameObject = 6,
-    DynamicObject = 7,
-    Corpse = 8,
-    AreaTrigger = 9,
-    SceneObject = 10,
-    ConversationData = 11,
-};; ]]
---[[
-function hasbuff(spellname, unit)
-  local unit = unit or 'player'
-  if not spellname then return false end
-  if (not UnitExists(unit) or UnitIsDeadOrGhost(unit)) then return false end
-  for i = 1, 40 do
-    local _, _, count, _, _, _, _, _, _, spellId, _, _, _, _, _ =
-    UnitBuff(unit, i) --, "HELPFUL")
-    local buffname,_ = GetSpellInfo(spellId) 
-    if buffname == spellname then return true end
-  end
-  return false
-end
-]]
+--[[ Tinkr.classic then
+    ObjectManager.Types = {
+        Object = 0,
+        Item = 1,
+        Container = 2,
+        Unit = 3,
+        Player = 4,
+        ActivePlayer = 5,
+        GameObject = 6,
+        DynamicObject = 7,
+        Corpse = 8,
+        AreaTrigger = 9,
+        SceneObject = 10,
+        ConversationData = 11
+    }
+    ObjectManager.TypeNames = {
+        [0] = "Object",
+        [1] = "Item",
+        [2] = "Container",
+        [3] = "Unit",
+        [4] = "Player",
+        [5] = "ActivePlayer",
+        [6] = "GameObject",
+        [7] = "DynamicObject",
+        [8] = "Corpse",
+        [9] = "AreaTrigger",
+        [10] = "SceneObject",
+        [11] = "ConversationData"
+    }
+    ObjectManager.CreatureTypes = {
+        Beast = 1,
+        Dragonkin = 2,
+        Demon = 3,
+        Elemental = 4,
+        Giant = 5,
+        Undead = 6,
+        Humanoid = 7,
+        Critter = 8,
+        Mechanical = 9,
+        NOT_SPECIFIED = 10,
+        Totem = 11,
+        NON_COMBAT_PET = 12,
+        GAS_CLOUD = 13
+    }]]
 local function UnitTargetingUnit(unit1,unit2)
   if UnitIsVisible(UnitTarget(unit1)) and UnitIsVisible(unit2) then
     if UnitGUID(UnitTarget(unit1)) == UnitGUID(unit2) then
@@ -330,7 +346,7 @@ Routine:RegisterRoutine(function()
     for i=1,30 do
       local debuff,_,_,debufftype = UnitDebuff(unit,i)
       if not debuff then break end
-      if debufftype == "Poison" or debufftype == "Disease" or debufftype == "Curse" or debufftype == "Bleed" then
+      if debufftype == "Disease" or debufftype == "Curse" or debufftype == "Bleed" then
         return debuff
       end
     end
@@ -338,7 +354,7 @@ Routine:RegisterRoutine(function()
   
   local function Execute()
     --*Eviscerate=Attack Power * (Number of Combo Points used * 0.03) * abitrary multiplier to account for Auto Attacks while pooling
-    local e1, e2, e3, e4, e5 = GetFinisherMaxDamage("Eviscerate")
+    local e1, e2, e3, e4, e5 = GetFinisherMaxDamage(26865)
     local ap = UnitAttackPower("player")
     local multiplier = wowex.wowexStorage.read("personalmultiplier")
     local evisc1calculated = ap * (1 * 0.03) + e1 * multiplier
@@ -373,6 +389,7 @@ Routine:RegisterRoutine(function()
   
   local function Defensives()
     if UnitAffectingCombat("player") and not mounted() then
+      --local defclass, _, _ = UnitClass("target")
       --if mounted() then
       --  Dismount()
       --end
@@ -382,11 +399,9 @@ Routine:RegisterRoutine(function()
       if health() <= 30 and not buff(30458, "player") then
         Eval('RunMacroText("/use 6")', 'player')
       end
-      --[[
-      if castable(Evasion) and health() <= 90 and UnitTargetingUnit("target","player") then
-        cast(Evasion,"player")
-      end
-      ]]
+      --if castable(Evasion) and health() <= 95 and UnitTargetingUnit("target","player") and (defclass == "Warrior" or defclass == "Rogue") then
+      --  cast(Evasion,"player")
+      --end
       --[[
       for i, object in ipairs(Objects()) do
         if UnitCanAttack("player",object) and UnitTargetingUnit(object,'player') then
@@ -396,22 +411,6 @@ Routine:RegisterRoutine(function()
               return cast(Vanish)
             end 
           end
-        end
-      end
-      ]]
-      --for i, object in ipairs(Objects()) do
-      --  local dclass, englishClass, classIndex = UnitClass(object)
-      --  if dclass == "Hunter" and UnitAffectingCombat('player') and not UnitExists('target') and debuff(5384, object) then
-      --    TargetUnit(object)
-      --    Debug("Retargetting " .. UnitName(object), 5384)
-      -- end
-      --[[
-      if castable(Gouge) and health() <= 40 and not IsBehind("target") and UnitTargetingUnit("target", "player") and buffCount("player", _, 'HARMFUL') <= 1 then
-        FaceObject("target")
-        cast(Gouge,"target")
-        Debug("Gouge to heal" .. UnitName("target"), 38764)
-        if items(21991) >= 1 then
-          return use(21991, "player")
         end
       end
       ]]
@@ -470,13 +469,6 @@ Routine:RegisterRoutine(function()
                   Debug("Shadowstep on " .. ObjectName(object),38768)
                   kickNameplate(Kick, true)
                 end
-                --if casting(object) and not buff(Stealth,"player") then
-                --  cast(Kick,object)
-                --  Debug("Quick Kick on " .. ObjectName(object),38768)
-                    --Eval('RunMacroText("/cast Shadowstep")', 'target')
-                    --Eval('RunMacroText("/cast Kick")', 'target')
-                    --cast(Shadowstep,object)
-                --end
                 if buff(36554,"player") then
                   kickNameplate(Kick, true)
                 end 
@@ -552,12 +544,9 @@ Routine:RegisterRoutine(function()
 
   local function Cooldowns()
     if UnitExists("target") and UnitCanAttack("player","target") and UnitAffectingCombat("player") and not buff(Stealth,"player") and not mounted() then
-      -- ONLY FOR ARENA 
-      --for i, object in ipairs(Objects()) do
-      --  if castable(Shadowstep,object) and cansee('player',object) and (isCasting(object) or isChanneling(object)) and UnitTargetingUnit(object,"target") and UnitHealth("target") < 70 then
-      --    cast(Shadowstep,object)
-      --  end
-      -- end
+      if buff(36554,"player") then
+        kickNameplate(Kick, true)
+      end 
       if castable(Preparation) and not castable(Vanish) and not castable(Evasion) then
         cast(Preparation)
         Debug("Prep used on " .. UnitName("player"), 14185)
@@ -572,7 +561,7 @@ Routine:RegisterRoutine(function()
       end
     end
     --Blind on
-    if castable(Blind) and health("target") <= 50 then
+    if castable(Blind) and health("target") <= 50 and not buff(Stealth,"player") then
       for object in OM:Objects(OM.Types.Players) do
         if (ObjectType(object) == 4 or ObjectType(object) == 5) and UnitCanAttack("player",object) and distance("player",object) <= 15 then
           if UnitTargetingUnit(object,"target") and not UnitTargetingUnit("player",object) and not IsPoisoned(object) then
@@ -644,7 +633,7 @@ Routine:RegisterRoutine(function()
             cast(Premeditation, "target")
             cast(Garrote,"target")
           end
-          if wowex.wowexStorage.read("openerbehind") == "Garrote" and castable(CheapShot) and not buff(34471, "target") then
+          if wowex.wowexStorage.read("openerbehind") == "Garrote" and castable(CheapShot) and not buff(34471, "target") and not mounted("target") then
             cast(Premeditation, "target")
             cast(CheapShot,"target")
           end
@@ -657,6 +646,9 @@ Routine:RegisterRoutine(function()
   end
   local function Dps()
     if UnitAffectingCombat("player") and UnitExists("target") and UnitCanAttack("player","target") and not buff(Stealth,"player") then
+      if buff(36554,"player") then
+        kickNameplate(Kick, true)
+      end 
       local class, _, _ = UnitClass("target")
       local kidneydelay = 0
       if kickInterrupt ~= nil then
@@ -734,7 +726,7 @@ Routine:RegisterRoutine(function()
         --  end 
       --  end
       end
-      if castable(KidneyShot, "target") and kidneydelay >= 0.1 and kidneydelay <= 0.4 and (class == "Priest" or class == "Druid" or class == "Shaman" or class == "Warlock" or class == "Mage" or class == "Paladin") then
+      if castable(KidneyShot, "target") and kidneydelay >= 0.1 and kidneydelay <= 0.4 --[[and (class == "Priest" or class == "Druid" or class == "Shaman" or class == "Warlock" or class == "Mage" or class == "Paladin")]] then
         cast(KidneyShot, "target")
         Debug("Kidney Shot to chain Kick on " .. UnitName("target"), 38764)
       end
@@ -809,6 +801,9 @@ Routine:RegisterRoutine(function()
       if mounted() then
         Dismount()
       end
+      if buff(36554,"player") then
+        kickNameplate(Kick, true)
+      end 
       --if itemID ~= 29124 then
       --  EquipItemByName(29124, 16)
       --end 
@@ -958,6 +953,17 @@ Routine:RegisterRoutine(function()
             Debug("Gouge".." "..UnitName(object),11286)   
           end
         end 
+      end
+    end
+    for object in OM:Objects(OM.Types.Units) do
+      if UnitCreatureType(object) == 11 then
+        local totemname = ObjectName(object)
+        if totemname == "Stoneskin Totem" or totemname == "Windfury Totem" or totemname == "Magma Totem" or totemname == "Poison Cleansing Totem" or totemname == "Mana Tide Totem" then
+          if UnitCanAttack("player",object) and not buff(Stealth,"player") then
+            TargetUnit(object)
+            Eval('StartAttack()', 't')
+          end
+        end
       end
     end
   end
