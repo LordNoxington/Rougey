@@ -236,13 +236,10 @@ f:RegisterEvent("COMBAT_LOG_EVENT_UNFILTERED")
 f:SetScript("OnEvent", function(self, event)
   self:COMBAT_LOG_EVENT_UNFILTERED(CombatLogGetCurrentEventInfo())
   end)
---[[
-local trinket = CreateFrame("Frame")
-trinket:RegisterEvent("UNIT_SPELLCAST_SUCCEEDED")
-trinket:SetScript("OnEvent", function(self, event)
-  self:UNIT_SPELLCAST_SUCCEEDED(CombatLogGetCurrentEventInfo())
-  end)
-]]
+
+local t = CreateFrame("Frame")
+t:RegisterEvent("UNIT_SPELLCAST_SUCCEEDED")
+
 local function LogEvent(self, event, ...)
   if event == "COMBAT_LOG_EVENT_UNFILTERED" or event == "COMBAT_LOG_EVENT" then
     self:LogEvent_Original(event, CombatLogGetCurrentEventInfo())
@@ -485,23 +482,31 @@ Routine:RegisterRoutine(function()
         end
       end
     end
-  --[[
-  function trinket:UNIT_SPELLCAST_SUCCEEDED(...)
-    --local timestamp, subevent, _, sourceGUID, sourceName, _, _, destGUID, destName, _, _ = ...
-    --local spellId, spellName, spellSchool
-    local targetUnit, castGUID, spellID = ...
-
-    if spellID == 42292 then
-      print("\124cffff80ff\124Tinterface\\ChatFrame\\UI-ChatIcon-Blizz:12:20:0:0:32:16:4:28:0:16\124t [Yosh] whispers: Hello, " .. spellID)
-      local blindtarget = Object(targetUnit)
-      if castable(Blind, targetUnit) and not buff(Stealth,"player") and UnitCanAttack("player",targetUnit) then
-        FaceObject(targetUnit)
-        cast(Blind, targetUnit)
-        Debug("Blinding Trinket on " .. UnitName(targetUnit),42292)
+  
+  function t:UNIT_SPELLCAST_SUCCEEDED()
+    t:SetScript("OnEvent", function(self, event, arg1, arg2, arg3)
+      trinketused = false
+      trinketUsedBy = nil
+      if event == "UNIT_SPELLCAST_SUCCEEDED" then
+        if arg3 == 42292 then
+          if UnitCanAttack("player",arg1) then
+            trinketUsedBy = Object(arg1)
+            trinketused = true
+            print(arg1 .. " " .. arg2 .. " " .. arg3)
+            Debug("Trinket used by " .. ObjectName(trinketUsedBy),42292)
+          end
+        end
       end
-    end
+    end) 
+
+      --local blindtarget = Object(targetUnit)
+      --if castable(Blind, blindtarget) and not buff(Stealth,"player") and UnitCanAttack("player",blindtarget) then
+      --  FaceObject(blindtarget)
+      --  cast(Blind, blindtarget)
+       -- Debug("Blinding Trinket on " .. UnitName(blindtarget),42292)
+      --end
   end
-  ]]
+  
 
   local function Interrupt()
     if UnitAffectingCombat("player") and not buff(Stealth,"player") then
@@ -561,8 +566,9 @@ Routine:RegisterRoutine(function()
       end
     end
     --Blind on
-    if castable(Blind) and health("target") <= 50 and not buff(Stealth,"player") then
+    if castable(Blind) and health("target") <= 70 and not buff(Stealth,"player") then
       for object in OM:Objects(OM.Types.Players) do
+        if trinketUsedBy ~= nil and object == trinketUsedBy then
         if (ObjectType(object) == 4 or ObjectType(object) == 5) and UnitCanAttack("player",object) and distance("player",object) <= 15 then
           if UnitTargetingUnit(object,"target") and not UnitTargetingUnit("player",object) and not IsPoisoned(object) then
             cast(Blind,object)
@@ -578,6 +584,7 @@ Routine:RegisterRoutine(function()
         --    cast(Blind,object)
         --  end
         end 
+        end
       end
     end
   end
@@ -742,10 +749,6 @@ Routine:RegisterRoutine(function()
       --  cast(KidneyShot, "target")
       --  Debug("Kidney to Interrupt on " .. UnitName("target"), 8643)
       --end
-      if castable(Rupture, "target") and GetComboPoints >= 4 and health("target") >= 60 and class == "Rogue" and not debuff(26867, "target") then
-        cast(Rupture, "target")
-        Debug("Rupture early on " .. UnitName("target"), 38764)
-      end
       if castable(26679, "target") and distance("player","target") >= 30 and GetComboPoints >= 1 and not castable(Shadowstep, "target") and (isCasting("target") or isChanneling("target")) then
         cast(26679, "target")
         Debug("Deadly Throw to Interrupt on " .. UnitName("target"), 26679)
@@ -754,6 +757,10 @@ Routine:RegisterRoutine(function()
       if castable(KidneyShot, "target") and GetComboPoints >= 4 and not debuff(KidneyShot, "target") and not debuff(1833, "target") and not debuff(1330, "target") and not debuff(18469, "target") and not buff(34471, "target") and kidneydelay <= 0.4 then
         cast(KidneyShot, "target")
         Debug("BIG Kidney on " .. UnitName("target"), 8643)
+      end
+      if castable(Rupture, "target") and GetComboPoints >= 4 and health("target") >= 60 and class == "Rogue" and not debuff(26867, "target") then
+        cast(Rupture, "target")
+        Debug("Rupture early on " .. UnitName("target"), 38764)
       end
       if castable(SliceAndDice,"target") and GetComboPoints <= 4 and GetComboPoints >= 1 and not buff(SliceAndDice, "player") and not debuff(CheapShot, "target") and not debuff(1330, "target") and cooldown(KidneyShot) > 3 then
         cast(SliceAndDice,"target")
@@ -955,7 +962,8 @@ Routine:RegisterRoutine(function()
         end 
       end
     end
-    for object in OM:Objects(OM.Types.Units) do
+
+    for i, object in ipairs(Objects()) do
       if UnitCreatureType(object) == 11 then
         local totemname = ObjectName(object)
         if totemname == "Stoneskin Totem" or totemname == "Windfury Totem" or totemname == "Magma Totem" or totemname == "Poison Cleansing Totem" or totemname == "Mana Tide Totem" then
@@ -967,6 +975,7 @@ Routine:RegisterRoutine(function()
       end
     end
   end
+  
   local function Hide()
     if wowex.wowexStorage.read("useStealth") and not (buff(Stealth,"player") or buff(Vanish,"player")) and not UnitAffectingCombat("player") and UnitCanAttack("player","target") and not melee() and not IsPoisoned("player") then
       if wowex.wowexStorage.read("stealthmode") == "DynTarget" then
@@ -997,7 +1006,7 @@ Routine:RegisterRoutine(function()
     if Defensives() then return true end
     if Interrupt() then return true end
     if f:COMBAT_LOG_EVENT_UNFILTERED() then return true end
-    --if trinket:UNIT_SPELLCAST_SUCCEEDED() then return true end
+    if t:UNIT_SPELLCAST_SUCCEEDED() then return true end
     if Cooldowns() then return true end
     if Execute() then return true end
     if pvp() then return true end
