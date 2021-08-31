@@ -485,14 +485,11 @@ Routine:RegisterRoutine(function()
   
   function t:UNIT_SPELLCAST_SUCCEEDED()
     t:SetScript("OnEvent", function(self, event, arg1, arg2, arg3)
-      trinketused = false
       trinketUsedBy = nil
       if event == "UNIT_SPELLCAST_SUCCEEDED" then
         if arg3 == 42292 then
           if UnitCanAttack("player",arg1) then
             trinketUsedBy = Object(arg1)
-            trinketused = true
-            print(arg1 .. " " .. arg2 .. " " .. arg3)
             Debug("Trinket used by " .. ObjectName(trinketUsedBy),42292)
           end
         end
@@ -566,14 +563,15 @@ Routine:RegisterRoutine(function()
       end
     end
     --Blind on
-    if castable(Blind) and health("target") <= 70 and not buff(Stealth,"player") then
-      for object in OM:Objects(OM.Types.Players) do
-        if trinketUsedBy ~= nil and object == trinketUsedBy then
-        if (ObjectType(object) == 4 or ObjectType(object) == 5) and UnitCanAttack("player",object) and distance("player",object) <= 15 then
-          if UnitTargetingUnit(object,"target") and not UnitTargetingUnit("player",object) and not IsPoisoned(object) then
-            cast(Blind,object)
-          elseif UnitTargetingUnit(object,"player") and not UnitTargetingUnit("player",object) and not IsPoisoned(object) then
-            cast(Blind,object)
+    if trinketUsedBy ~= nil then
+      if castable(Blind) and health("target") <= 70 and not buff(Stealth,"player") then
+        if (ObjectType(trinketUsedBy) == 4 or ObjectType(trinketUsedBy) == 5) and UnitCanAttack("player",trinketUsedBy) and distance("player",trinketUsedBy) <= 15 then
+          if UnitTargetingUnit(trinketUsedBy,"target") and not UnitTargetingUnit("player",trinketUsedBy) and not IsPoisoned(trinketUsedBy) then
+            cast(Blind,trinketUsedBy)
+            trinketUsedBy = nil
+          elseif UnitTargetingUnit(trinketUsedBy,"player") and not UnitTargetingUnit("player",trinketUsedBy) and not IsPoisoned(trinketUsedBy) then
+            cast(Blind,trinketUsedBy)
+            trinketUsedBy = nil
           end
         --elseif (ObjectType(object) == 4 or ObjectType(object) == 5) and UnitCanAttack("player",object) and distance("player",object) >= 15 then
         --  if UnitTargetingUnit(object,"target") and not UnitTargetingUnit("player",object) and not IsPoisoned(object) then
@@ -583,7 +581,6 @@ Routine:RegisterRoutine(function()
         --    cast(Shadowstep,object)
         --    cast(Blind,object)
         --  end
-        end 
         end
       end
     end
@@ -962,20 +959,24 @@ Routine:RegisterRoutine(function()
         end 
       end
     end
+    --[[
+    if UnitAffectingCombat("player") then
 
-    for i, object in ipairs(Objects()) do
-      if UnitCreatureType(object) == 11 then
-        local totemname = ObjectName(object)
-        if totemname == "Stoneskin Totem" or totemname == "Windfury Totem" or totemname == "Magma Totem" or totemname == "Poison Cleansing Totem" or totemname == "Mana Tide Totem" then
-          if UnitCanAttack("player",object) and not buff(Stealth,"player") then
-            TargetUnit(object)
-            Eval('StartAttack()', 't')
+      for i, object in ipairs(Objects()) do
+        if UnitCreatureType(object) == 11 then
+          local totemname = ObjectName(object)
+          if totemname == "Stoneskin Totem" or totemname == "Windfury Totem" or totemname == "Magma Totem" or totemname == "Poison Cleansing Totem" or totemname == "Mana Tide Totem" then
+            if UnitCanAttack("player",object) and not buff(Stealth,"player") then
+              TargetUnit(object)
+              Eval('StartAttack()', 't')
+            end
           end
         end
       end
     end
+    ]]
   end
-  
+
   local function Hide()
     if wowex.wowexStorage.read("useStealth") and not (buff(Stealth,"player") or buff(Vanish,"player")) and not UnitAffectingCombat("player") and UnitCanAttack("player","target") and not melee() and not IsPoisoned("player") then
       if wowex.wowexStorage.read("stealthmode") == "DynTarget" then
