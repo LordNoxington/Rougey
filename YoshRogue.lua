@@ -277,8 +277,8 @@ Routine:RegisterRoutine(function()
   local GetComboPoints = GetComboPoints("player","target")
   --local mainHandLink = GetInventoryItemLink("player", GetInventorySlotInfo("MainHandSlot"))
   --local _, _, _, _, _, _, itemType5 = GetItemInfo(mainHandLink)
-  --if gcd() > latency() then return end
-  --if wowex.keystate() then return end
+  if gcd() > latency() then return end
+  if wowex.keystate() then return end
   if UnitIsDeadOrGhost("player") or debuffduration(Gouge,"target") > 0.3 or debuffduration(Sap,"target") > 0.3 or debuff(Cyclone,"target") or debuffduration(Blind,"target") > 0.3 or debuff(12826,"target") or buff(45438, "target") then return end
   -- or buff(Vanish,"player")
   local function InventorySlots()
@@ -969,23 +969,23 @@ Routine:RegisterRoutine(function()
         end 
       end
     end
-      for object in OM:Objects(OM.Types.Units) do
-        if (ObjectType(object) == 3 or ObjectType(object) == 5) and UnitCanAttack("player",object) and not UnitIsDeadOrGhost(object) and UnitAffectingCombat("player") then
-          if castable(Vanish) and not UnitAffectingCombat(object) and distance("player",object) <= 10 and GetUnitName("target") ~= ObjectName(object) then
-            sapobject = Object(object)
-            cast(26889,"player")
-            Debug("Vanish to Sap " .. UnitName(object), 26889)
-          end   
-        end
-      end
-      while(buff(26888,"player") and castable(Sap,sapobject)) do
-        TargetUnit(sapobject)
-        FaceObject(sapobject)
-        cast(Sap,sapobject)
-        TargetLastTarget()
-        break
+    for object in OM:Objects(OM.Types.Units) do
+      if (ObjectType(object) == 3 or ObjectType(object) == 5) and UnitCanAttack("player",object) and not UnitIsDeadOrGhost(object) and UnitAffectingCombat("player") then
+        if castable(Vanish) and not UnitAffectingCombat(object) and distance("player",object) <= 10 and GetUnitName("target") ~= ObjectName(object) then
+          sapobject = Object(object)
+          cast(26889,"player")
+          Debug("Vanish to Sap " .. UnitName(object), 26889)
+        end   
       end
     end
+    while(buff(26888,"player") and castable(Sap,sapobject) and not UnitAffectingCombat(sapobject)) do
+      TargetUnit(sapobject)
+      FaceObject(sapobject)
+      cast(Sap,sapobject)
+      --TargetLastTarget()
+      break
+    end
+  end
     --[[
     if instanceType ~= "arena" then 
       for object in OM:Objects(OM.Types.Units) do
