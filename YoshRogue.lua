@@ -9,6 +9,11 @@
 --Add kicks for specific spells
 --Add Blinds for objects that aren't your target, and target is <= 30% health DONEE
 --Don't overlap kick with kidney shop... Track kick interrupt DONEE
+--Add blind on objects who trinket DONE
+--Add isDefensive check
+--Add isOffensive check
+--Add Spell queue over gcd (e.g. SS+Blind) DONNEE -- Need testing
+--Add Vanish+SAP on units dropping out of combat DONEE -- Needs testing
 local Tinkr = ...
 local wowex = {}
 local Routine = Tinkr.Routine
@@ -430,6 +435,10 @@ Routine:RegisterRoutine(function()
         cast(Vanish)
         Debug("Vanishing Hammer of Justice!! ",853)
       end
+      if destName ~= myname and spellName == "Vanish" and castable(Vanish) then
+        cast(Vanish)
+        Debug("Vanshing to avoid Rogue opener",1859)
+      end
       if destName == myname and spellName == "Death Coil" then
         if castable(Vanish) then
           cast(Vanish)
@@ -454,7 +463,7 @@ Routine:RegisterRoutine(function()
     end
       if subevent == "SPELL_CAST_START" then
         local spellId, spellName, _, _, _, _, _, _, _, _, _, _, _ = select(12, ...)
-        if spellName == "Fear" or spellName == "Polymorph" or spellName == "Regrowth" or spellId == 25235 or spellName == "Cyclone" then
+        if spellName == "Fear" or spellName == "Polymorph" or spellName == "Regrowth" or spellId == 25235 or spellName == "Cyclone" or spellName == "Greater Heal" or spellName == "Flash Heal" then
           --for i, object in ipairs(Objects()) do
           for object in OM:Objects(OM.Types.Players) do
             if sourceName == ObjectName(object) then
@@ -494,14 +503,7 @@ Routine:RegisterRoutine(function()
           end
         end
       end
-    end) 
-
-      --local blindtarget = Object(targetUnit)
-      --if castable(Blind, blindtarget) and not buff(Stealth,"player") and UnitCanAttack("player",blindtarget) then
-      --  FaceObject(blindtarget)
-      --  cast(Blind, blindtarget)
-       -- Debug("Blinding Trinket on " .. UnitName(blindtarget),42292)
-      --end
+    end)
   end
   
 
@@ -573,14 +575,14 @@ Routine:RegisterRoutine(function()
             cast(Blind,trinketUsedBy)
             trinketUsedBy = nil
           end
-        --elseif (ObjectType(object) == 4 or ObjectType(object) == 5) and UnitCanAttack("player",object) and distance("player",object) >= 15 then
-        --  if UnitTargetingUnit(object,"target") and not UnitTargetingUnit("player",object) and not IsPoisoned(object) then
-        --    cast(Shadowstep,object)
-        --    cast(Blind,object)
-        --  elseif UnitTargetingUnit(object,"player") and not UnitTargetingUnit("player",object) and not IsPoisoned(object) then
-        --    cast(Shadowstep,object)
-        --    cast(Blind,object)
-        --  end
+        elseif (ObjectType(object) == 4 or ObjectType(object) == 5) and UnitCanAttack("player",object) and distance("player",object) >= 15 then
+          if (UnitTargetingUnit(object,"target") and not UnitTargetingUnit("player",object) and not IsPoisoned(object)) or (UnitTargetingUnit(object,"player") and not UnitTargetingUnit("player",object) and not IsPoisoned(object)) then
+            cast(Shadowstep,object)
+            while buff(Shadowstep, "player") and not debuff(2094,object) do
+              cast(Blind,object)
+              trinketUsedBy = nil
+            end
+          end
         end
       end
     end
@@ -674,7 +676,7 @@ Routine:RegisterRoutine(function()
         --Dismount()
         Eval('StartAttack()', 't')
       end
-      if castable(SliceAndDice) and GetComboPoints <= 0 and not buff(SliceAndDice,"player") and distance("player","target") <= 20 and UnitPower("player") >= 40 and not (isCasting("target") or isChanneling("target")) then
+      if castable(SliceAndDice) and GetComboPoints <= 0 and not buff(SliceAndDice,"player") and distance("player","target") <= 20 and UnitPower("player") >= 40 and isPlayerAttacking("target") and not (isCasting("target") or isChanneling("target")) then
         TargetLastTarget()
         --if not UnitIsDeadOrGhost("target") and GetComboPoints >= 1 then
           cast(SliceAndDice)
@@ -734,7 +736,7 @@ Routine:RegisterRoutine(function()
         cast(KidneyShot, "target")
         Debug("Kidney Shot to chain Kick on " .. UnitName("target"), 38764)
       end
-      if debuff(18469,"target") and castable(KidneyShot, "target") and debuffduration(18469,"target") < 0.2 then
+      if (debuff(18469,"target") or debuff(15487,"target")) and castable(KidneyShot, "target") and (debuffduration(18469,"target") < 0.2 or debuffduration(15487,"target")) then
         cast(KidneyShot, "target")
         Debug("Kidney to Chain Silence on " .. UnitName("target"), 8643)
       end
@@ -957,6 +959,22 @@ Routine:RegisterRoutine(function()
             Debug("Gouge".." "..UnitName(object),11286)   
           end
         end 
+      end
+      if UnitAffectingCombat("player") and not UnitAffectingCombat(object) and castable(Vanish) then
+        if (ObjectType(object) == 4 or ObjectType(object) == 5) and UnitCanAttack("player",object) then
+          TargetUnit(object)
+          FaceObject(object)
+          cast(Vanish)
+          while buff(Vanish,"player") do
+          if castable(Sap,object) then
+            cast(Sap,object)
+          elseif castable(Shadowstep,object) then 
+            cast(Shadowstep,object)
+            while buff(Shadowstep,"player") do
+              cast(Sap,object)
+            end
+          end
+        end
       end
     end
     --[[
