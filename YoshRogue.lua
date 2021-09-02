@@ -573,9 +573,11 @@ Routine:RegisterRoutine(function()
         if (ObjectType(trinketUsedBy) == 4 or ObjectType(trinketUsedBy) == 5) and UnitCanAttack("player",trinketUsedBy) and distance("player",trinketUsedBy) <= 15 then
           if UnitTargetingUnit(trinketUsedBy,"target") and not UnitTargetingUnit("player",trinketUsedBy) and not IsPoisoned(trinketUsedBy) then
             cast(Blind,trinketUsedBy)
+            Debug("Blind off-target " .. UnitName(trinketUsedBy), 2094)
             trinketUsedBy = nil
           elseif UnitTargetingUnit(trinketUsedBy,"player") and not UnitTargetingUnit("player",trinketUsedBy) and not IsPoisoned(trinketUsedBy) then
             cast(Blind,trinketUsedBy)
+            Debug("Blind off-target " .. UnitName(trinketUsedBy), 2094)
             trinketUsedBy = nil
           end
         elseif (ObjectType(trinketUsedBy) == 4 or ObjectType(trinketUsedBy) == 5) and UnitCanAttack("player",trinketUsedBy) and distance("player",trinketUsedBy) >= 15 then
@@ -583,6 +585,7 @@ Routine:RegisterRoutine(function()
             cast(Shadowstep,trinketUsedBy)
             while buff(Shadowstep, "player") and not debuff(2094,trinketUsedBy) do
               cast(Blind,trinketUsedBy)
+              Debug("Shadowstep + Blind on " .. UnitName(trinketUsedBy), 2094)
               trinketUsedBy = nil
             end
           end
@@ -964,23 +967,40 @@ Routine:RegisterRoutine(function()
         end 
       end
     end
-    if UnitAffectingCombat("player") then
+    if (instanceType == "arena") and UnitAffectingCombat("player") then
       for object in OM:Objects(OM.Types.Players) do
         if (ObjectType(object) == 4 or ObjectType(object) == 5) and UnitCanAttack("player",object) then
-          if castable(Vanish) and not UnitAffectingCombat(object) then
+          if castable(Vanish) and not UnitAffectingCombat(object) and distance("player",object) <= 25 then
             TargetUnit(object)
             FaceObject(object)
             cast(Vanish)
+            Debug("Vanish to Sap " .. UnitName(object), 26889)
             while buff(Vanish,"player") do
               if castable(Sap,object) and distance("player",object) <= 10 then
                 cast(Sap,object)
                 TargetLastTarget()
               elseif castable(Shadowstep,object) then 
                 cast(Shadowstep,object)
+                Debug("Shadowstep to Sap " .. UnitName(object), 36554)
                 while buff(Shadowstep,"player") do
                   cast(Sap,object)
-                  TargetLastTarget()
                 end
+              end
+            end
+          end
+        end
+      end
+    elseif UnitAffectingCombat("player") then
+      for object in OM:Objects(OM.Types.Players) do
+        if (ObjectType(object) == 4 or ObjectType(object) == 5) and UnitCanAttack("player",object) then
+          if castable(Vanish) and not UnitAffectingCombat(object) and distance("player",object) <= 10 then
+            TargetUnit(object)
+            FaceObject(object)
+            cast(Vanish)
+            Debug("Vanish to Sap " .. UnitName(object), 26889)
+            while buff(Vanish,"player") do
+              if castable(Sap,object) then
+                cast(Sap,object)
               end
             end
           end
