@@ -436,8 +436,11 @@ Routine:RegisterRoutine(function()
         Debug("Vanishing Hammer of Justice!! ",853)
       end
       if destName ~= myname and spellName == "Vanish" and castable(Vanish) then
-        cast(Vanish)
-        Debug("Vanshing to avoid Rogue opener",1859)
+        local vanisher = Object(destName)
+        if UnitCanAttack("player",vanisher) then
+          cast(Vanish)
+          Debug("Vanshing to avoid Rogue opener",1856)
+        end
       end
       if destName == myname and spellName == "Death Coil" then
         if castable(Vanish) then
@@ -676,7 +679,7 @@ Routine:RegisterRoutine(function()
         --Dismount()
         Eval('StartAttack()', 't')
       end
-      if castable(SliceAndDice) and GetComboPoints <= 0 and not buff(SliceAndDice,"player") and distance("player","target") <= 20 and UnitPower("player") >= 40 and isPlayerAttacking("target") and not (isCasting("target") or isChanneling("target")) then
+      if castable(SliceAndDice) and GetComboPoints <= 0 and not buff(SliceAndDice,"player") and distance("player","target") <= 20 and UnitPower("player") >= 40 and not (isCasting("target") or isChanneling("target")) then
         TargetLastTarget()
         --if not UnitIsDeadOrGhost("target") and GetComboPoints >= 1 then
           cast(SliceAndDice)
@@ -960,26 +963,31 @@ Routine:RegisterRoutine(function()
           end
         end 
       end
-      if UnitAffectingCombat("player") and not UnitAffectingCombat(object) and castable(Vanish) then
+    end
+    if UnitAffectingCombat("player") then
+      for object in OM:Objects(OM.Types.Players) do
         if (ObjectType(object) == 4 or ObjectType(object) == 5) and UnitCanAttack("player",object) then
-          TargetUnit(object)
-          FaceObject(object)
-          cast(Vanish)
-          while buff(Vanish,"player") do
-            if castable(Sap,object) then
-              cast(Sap,object)
-              TargetLastTarget()
-            elseif castable(Shadowstep,object) then 
-              cast(Shadowstep,object)
-              while buff(Shadowstep,"player") do
+          if castable(Vanish) and not UnitAffectingCombat(object) then
+            TargetUnit(object)
+            FaceObject(object)
+            cast(Vanish)
+            while buff(Vanish,"player") do
+              if castable(Sap,object) and distance("player",object) <= 10 then
                 cast(Sap,object)
                 TargetLastTarget()
+              elseif castable(Shadowstep,object) then 
+                cast(Shadowstep,object)
+                while buff(Shadowstep,"player") do
+                  cast(Sap,object)
+                  TargetLastTarget()
+                end
               end
             end
           end
         end
       end
     end
+    
     --[[
     if UnitAffectingCombat("player") then
 
