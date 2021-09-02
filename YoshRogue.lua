@@ -575,11 +575,11 @@ Routine:RegisterRoutine(function()
             cast(Blind,trinketUsedBy)
             trinketUsedBy = nil
           end
-        elseif (ObjectType(object) == 4 or ObjectType(object) == 5) and UnitCanAttack("player",object) and distance("player",object) >= 15 then
-          if (UnitTargetingUnit(object,"target") and not UnitTargetingUnit("player",object) and not IsPoisoned(object)) or (UnitTargetingUnit(object,"player") and not UnitTargetingUnit("player",object) and not IsPoisoned(object)) then
-            cast(Shadowstep,object)
-            while buff(Shadowstep, "player") and not debuff(2094,object) do
-              cast(Blind,object)
+        elseif (ObjectType(trinketUsedBy) == 4 or ObjectType(trinketUsedBy) == 5) and UnitCanAttack("player",trinketUsedBy) and distance("player",trinketUsedBy) >= 15 then
+          if (UnitTargetingUnit(trinketUsedBy,"target") and not UnitTargetingUnit("player",trinketUsedBy) and not IsPoisoned(trinketUsedBy)) or (UnitTargetingUnit(trinketUsedBy,"player") and not UnitTargetingUnit("player",trinketUsedBy) and not IsPoisoned(trinketUsedBy)) then
+            cast(Shadowstep,trinketUsedBy)
+            while buff(Shadowstep, "player") and not debuff(2094,trinketUsedBy) do
+              cast(Blind,trinketUsedBy)
               trinketUsedBy = nil
             end
           end
@@ -966,12 +966,15 @@ Routine:RegisterRoutine(function()
           FaceObject(object)
           cast(Vanish)
           while buff(Vanish,"player") do
-          if castable(Sap,object) then
-            cast(Sap,object)
-          elseif castable(Shadowstep,object) then 
-            cast(Shadowstep,object)
-            while buff(Shadowstep,"player") do
+            if castable(Sap,object) then
               cast(Sap,object)
+              TargetLastTarget()
+            elseif castable(Shadowstep,object) then 
+              cast(Shadowstep,object)
+              while buff(Shadowstep,"player") do
+                cast(Sap,object)
+                TargetLastTarget()
+              end
             end
           end
         end
