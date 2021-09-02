@@ -356,6 +356,7 @@ Routine:RegisterRoutine(function()
   
   local function Execute()
     --*Eviscerate=Attack Power * (Number of Combo Points used * 0.03) * abitrary multiplier to account for Auto Attacks while pooling
+    if UnitAffectingCombat("player") then
     local e1, e2, e3, e4, e5 = GetFinisherMaxDamage(26865)
     local ap = UnitAttackPower("player")
     local multiplier = wowex.wowexStorage.read("personalmultiplier")
@@ -386,6 +387,7 @@ Routine:RegisterRoutine(function()
         cast(Eviscerate)
         Debug("Calculated Execute on " .. UnitName("target"), 26865)
       end
+    end
     end
   end
   
@@ -587,6 +589,7 @@ Routine:RegisterRoutine(function()
               cast(Blind,trinketUsedBy)
               Debug("Shadowstep + Blind on " .. UnitName(trinketUsedBy), 2094)
               trinketUsedBy = nil
+              break
             end
           end
         end
@@ -684,11 +687,11 @@ Routine:RegisterRoutine(function()
       end
       if castable(SliceAndDice) and GetComboPoints <= 0 and not buff(SliceAndDice,"player") and distance("player","target") <= 20 and UnitPower("player") >= 40 and not (isCasting("target") or isChanneling("target")) then
         TargetLastTarget()
-        --if not UnitIsDeadOrGhost("target") and GetComboPoints >= 1 then
+        if GetComboPoints >= 1 and not UnitIsDeadOrGhost("target") then
           cast(SliceAndDice)
           Debug("Slice and Dice on target change", 6774)
           TargetLastTarget()
-        --end
+        end
       end
       if debuff(CheapShot, "target") and not IsBehind("target") and castable(Gouge, "target") and debuffduration(1833, "target") < 0.3 then
         --for i=1,40 do
@@ -951,7 +954,7 @@ Routine:RegisterRoutine(function()
     end
     --for i, object in ipairs(Objects()) do
     for object in OM:Objects(OM.Types.Players) do
-      if (ObjectType(object) == 4 or ObjectType(object) == 5) and UnitCanAttack("player",object) then
+      if (ObjectType(object) == 4 or ObjectType(object) == 5) and UnitCanAttack("player",object) and not UnitIsDeadOrGhost(object) then
         if buff(Stealth,object) then
           if buff(Stealth,"player") and distance("player",object) <= 20 then
             TargetUnit(object)
@@ -967,10 +970,10 @@ Routine:RegisterRoutine(function()
         end 
       end
     end
-    if (instanceType == "arena") and UnitAffectingCombat("player") then
+    if instanceType == "arena" and UnitAffectingCombat("player") then
       for object in OM:Objects(OM.Types.Players) do
-        if (ObjectType(object) == 4 or ObjectType(object) == 5) and UnitCanAttack("player",object) then
-          if castable(Vanish) and not UnitAffectingCombat(object) and distance("player",object) <= 25 then
+        if (ObjectType(object) == 4 or ObjectType(object) == 5) and UnitCanAttack("player",object) and not UnitIsDeadOrGhost(object) then
+          if castable(Vanish) and not UnitAffectingCombat(object) and distance("player",object) <= 10 then
             TargetUnit(object)
             FaceObject(object)
             cast(Vanish)
@@ -979,20 +982,26 @@ Routine:RegisterRoutine(function()
               if castable(Sap,object) and distance("player",object) <= 10 then
                 cast(Sap,object)
                 TargetLastTarget()
-              elseif castable(Shadowstep,object) then 
-                cast(Shadowstep,object)
-                Debug("Shadowstep to Sap " .. UnitName(object), 36554)
-                while buff(Shadowstep,"player") do
-                  cast(Sap,object)
-                end
-              end
+              break end
             end
+          elseif distance("player",object) >= 11 and castable(Shadowstep,object) and castable(Vanish) and not UnitAffectingCombat(object) and distance("player",object) <= 25 then 
+            TargetUnit(object)
+            FaceObject(object)
+            cast(Vanish)
+            Debug("Vanish to SS+Sap " .. UnitName(object), 26889)
+            while buff(Vanish,"player") do
+              cast(Shadowstep,object)
+              Debug("Shadowstep to Sap " .. UnitName(object), 36554)
+              while buff(Shadowstep,"player") do
+                cast(Sap,object)
+              break end
+            break end
           end
         end
       end
-    elseif UnitAffectingCombat("player") then
+    elseif instanceType ~= "arena" and UnitAffectingCombat("player") then
       for object in OM:Objects(OM.Types.Players) do
-        if (ObjectType(object) == 4 or ObjectType(object) == 5) and UnitCanAttack("player",object) then
+        if (ObjectType(object) == 4 or ObjectType(object) == 5) and UnitCanAttack("player",object) and not UnitIsDeadOrGhost(object) then
           if castable(Vanish) and not UnitAffectingCombat(object) and distance("player",object) <= 10 then
             TargetUnit(object)
             FaceObject(object)
@@ -1001,6 +1010,7 @@ Routine:RegisterRoutine(function()
             while buff(Vanish,"player") do
               if castable(Sap,object) then
                 cast(Sap,object)
+                break
               end
             end
           end
@@ -1046,7 +1056,7 @@ Routine:RegisterRoutine(function()
       --  end
       --end
       if wowex.wowexStorage.read('stealtheat') then
-        if IsEatingOrDrinking() and castable(Stealth,"player") then
+        if IsEatingOrDrinking() and castable(Stealth) then
           cast(Stealth)
         end
       end
