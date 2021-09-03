@@ -969,8 +969,8 @@ Routine:RegisterRoutine(function()
         end 
       end
     end
-    for object in OM:Objects(OM.Types.Units) do
-      if (ObjectType(object) == 3 or ObjectType(object) == 5) and UnitCanAttack("player",object) and not UnitIsDeadOrGhost(object) and UnitAffectingCombat("player") then
+    for object in OM:Objects(OM.Types.Players) do
+      if (ObjectType(object) == 4 or ObjectType(object) == 5) and UnitCanAttack("player",object) and not UnitIsDeadOrGhost(object) and UnitAffectingCombat("player") then
         if castable(Vanish) and not UnitAffectingCombat(object) and distance("player",object) <= 10 and GetUnitName("target") ~= ObjectName(object) then
           sapobject = Object(object)
           cast(26889,"player")
