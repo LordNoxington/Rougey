@@ -14,6 +14,8 @@
 --Add isOffensive check
 --Add Spell queue over gcd (e.g. SS+Blind) DONNEE -- Need testing
 --Add Vanish+SAP on units dropping out of combat DONEE -- Needs testing
+--Add cloak on mage trinket and targeting me
+--Change garrotte check for UnitPowerType to classes
 local Tinkr = ...
 local wowex = {}
 local Routine = Tinkr.Routine
@@ -277,8 +279,8 @@ Routine:RegisterRoutine(function()
   local GetComboPoints = GetComboPoints("player","target")
   --local mainHandLink = GetInventoryItemLink("player", GetInventorySlotInfo("MainHandSlot"))
   --local _, _, _, _, _, _, itemType5 = GetItemInfo(mainHandLink)
-  if gcd() > latency() then return end
-  if wowex.keystate() then return end
+  --if gcd() > latency() then return end
+  --if wowex.keystate() then return end
   if UnitIsDeadOrGhost("player") or debuffduration(Gouge,"target") > 0.3 or debuffduration(Sap,"target") > 0.3 or debuff(Cyclone,"target") or debuffduration(Blind,"target") > 0.3 or debuff(12826,"target") or buff(45438, "target") then return end
   -- or buff(Vanish,"player")
   local function InventorySlots()
@@ -348,7 +350,7 @@ Routine:RegisterRoutine(function()
     for i=1,30 do
       local debuff,_,_,debufftype = UnitDebuff(unit,i)
       if not debuff then break end
-      if debufftype == "Disease" or debufftype == "Curse" or debufftype == "Bleed" then
+      if debufftype == "Disease" or debufftype == "Curse" or debufftype == "Bleed" or debufftype == "Magic" then
         return debuff
       end
     end
@@ -467,21 +469,17 @@ Routine:RegisterRoutine(function()
     end
       if subevent == "SPELL_CAST_START" then
         local spellId, spellName, _, _, _, _, _, _, _, _, _, _, _ = select(12, ...)
-        if spellName == "Fear" or spellName == "Polymorph" or spellName == "Regrowth" or spellId == 25235 or spellName == "Cyclone" or spellName == "Greater Heal" or spellName == "Flash Heal" then
+        if spellName == "Fear" or spellName == "Polymorph" or spellName == "Regrowth" or spellName == "Cyclone" or spellName == "Greater Heal" or spellName == "Flash Heal" then
           --for i, object in ipairs(Objects()) do
           for object in OM:Objects(OM.Types.Players) do
             if sourceName == ObjectName(object) then
               if (ObjectType(object) == 4 or ObjectType(object) == 5) and UnitCanAttack("player",object) then
-                if castable(Shadowstep,object) and cansee("player",object) and not buff(Stealth,"player") and UnitPower("player") >= 25 and (distance("player",object) >= 15 or not UnitTargetingUnit("player",object)) then
+                if castable(Shadowstep,object) and cooldown(Kick) <= 1 and cansee("player",object) and not buff(Stealth,"player") and distance("player",object) >= 5 and not UnitTargetingUnit("player",object) then
                   cast(Shadowstep,object)
                   FaceObject(object)
                   MoveForwardStop()
                   Debug("Shadowstep on " .. ObjectName(object),38768)
-                  kickNameplate(Kick, true)
                 end
-                if buff(36554,"player") then
-                  kickNameplate(Kick, true)
-                end 
               end
             end
           end
@@ -501,7 +499,7 @@ Routine:RegisterRoutine(function()
       trinketUsedBy = nil
       if event == "UNIT_SPELLCAST_SUCCEEDED" then
         if arg3 == 42292 then
-          if UnitCanAttack("player",arg1) then
+          if UnitCanAttack("player",arg1) and distance("player",arg1) <= 40 then
             trinketUsedBy = Object(arg1)
             Debug("Trinket used by " .. ObjectName(trinketUsedBy),42292)
           end
@@ -519,7 +517,8 @@ Routine:RegisterRoutine(function()
       --for i, object in ipairs(Objects()) do
       for object in OM:Objects(OM.Types.Units) do
         if (ObjectType(object) == 3 or ObjectType(object) == 4 or ObjectType(object) == 5) and UnitCanAttack("player",object) and UnitAffectingCombat("player")  then
-          if isCasting(object) then
+          local kickclass, _, _ = UnitClass(object)
+          if isCasting(object) and not kickclass == "Hunter" then
             local _, _, _, _, endTime, _, _, _ = UnitCastingInfo(object);
             local finish = endTime/1000 - GetTime()
             if finish <= 1 and castable(Kick,object) and melee() then
@@ -533,7 +532,7 @@ Routine:RegisterRoutine(function()
               Debug("Gouged " .. UnitName(object) .. " at " .. finish,38764)
             end 
           end 
-          if isChanneling(object) then
+          if isChanneling(object) and not kickclass == "Hunter" then
             local _, _, _, startTime = UnitChannelInfo(object);
             local startTime = startTime/1000 - GetTime()
             if startTime <= 1 and castable(Kick,object) and melee() then
@@ -570,7 +569,7 @@ Routine:RegisterRoutine(function()
     end
     --Blind on
     if trinketUsedBy ~= nil then
-      if castable(Blind) and health("target") <= 70 and not buff(Stealth,"player") then
+      if castable(Blind) and health("target") <= 90 and not buff(Stealth,"player") then
         if (ObjectType(trinketUsedBy) == 4 or ObjectType(trinketUsedBy) == 5) and UnitCanAttack("player",trinketUsedBy) and distance("player",trinketUsedBy) <= 15 then
           if UnitTargetingUnit(trinketUsedBy,"target") and not UnitTargetingUnit("player",trinketUsedBy) and not IsPoisoned(trinketUsedBy) then
             cast(Blind,trinketUsedBy)
@@ -636,18 +635,19 @@ Routine:RegisterRoutine(function()
   local function Opener()
     if UnitCanAttack("player","target") then
       if buff(Stealth,"player") or buff(26888,"player") then
+        local openerclass, _, _ = UnitClass("target")
         if not IsBehind("target") then
-          if wowex.wowexStorage.read("openerfrontal") == "Cheap Shot" and castable(CheapShot) then
+          if wowex.wowexStorage.read("openerfrontal") == "Cheap Shot" and castable(CheapShot) and not openerclass == "Mage" then
             cast(Premeditation, "target")
             cast(CheapShot,"target")
           end
         end
         if IsBehind("target") then
-          if wowex.wowexStorage.read("openerbehind") == "Garrote" and castable(Garrote) and UnitPowerType("target") == 0 and not debuff(18469, "target") and GetUnitSpeed("target") <= 10 then
+          if wowex.wowexStorage.read("openerbehind") == "Garrote" and castable(Garrote) and (openerclass == "Mage" or openerclass == "Priest" or openerclass == "Shaman" or openerclass == "Warlock" or openerclass == "Druid") and (not openerclass == "Hunter" or buff(34471,"target")) and not debuff(18469, "target") and GetUnitSpeed("target") <= 10 then
             cast(Premeditation, "target")
             cast(Garrote,"target")
           end
-          if wowex.wowexStorage.read("openerbehind") == "Garrote" and castable(CheapShot) and not buff(34471, "target") and not mounted("target") then
+          if wowex.wowexStorage.read("openerbehind") == "Garrote" and castable(CheapShot) and not buff(34471, "target") then
             cast(Premeditation, "target")
             cast(CheapShot,"target")
           end
@@ -756,7 +756,7 @@ Routine:RegisterRoutine(function()
       --  cast(KidneyShot, "target")
       --  Debug("Kidney to Interrupt on " .. UnitName("target"), 8643)
       --end
-      if castable(26679, "target") and distance("player","target") >= 30 and GetComboPoints >= 1 and not castable(Shadowstep, "target") and (isCasting("target") or isChanneling("target")) then
+      if castable(26679, "target") and distance("player","target") >= 15 and GetComboPoints >= 1 and not castable(Shadowstep, "target") and (isCasting("target") or isChanneling("target")) then
         cast(26679, "target")
         Debug("Deadly Throw to Interrupt on " .. UnitName("target"), 26679)
       end
