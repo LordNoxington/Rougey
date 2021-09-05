@@ -15,7 +15,7 @@
 --Add Spell queue over gcd (e.g. SS+Blind) DONNEE -- Need testing
 --Add Vanish+SAP on units dropping out of combat DONEE -- Needs testing
 --Add cloak on mage trinket and targeting me
---Change garrotte check for UnitPowerType to classes
+--Change garrotte check for UnitPowerType to classes DONE
 local Tinkr = ...
 local wowex = {}
 local Routine = Tinkr.Routine
@@ -148,7 +148,7 @@ Draw:Sync(function(draw)
     draw:Line(tx, ty, tz, fx, fy, fz)
   end
 
-  if UnitExists("target") and drawclass == "Warrior" and not UnitIsDeadOrGhost("target") then
+  if UnitExists("target") and drawclass == "Warrior" and UnitCanAttack("player","target") and not UnitIsDeadOrGhost("target") then
     draw:Circle(tx, ty, tz, 5)
     draw:SetColor(draw.colors.red)
     draw:Circle(tx, ty, tz, 8)
@@ -280,7 +280,7 @@ Routine:RegisterRoutine(function()
   --local mainHandLink = GetInventoryItemLink("player", GetInventorySlotInfo("MainHandSlot"))
   --local _, _, _, _, _, _, itemType5 = GetItemInfo(mainHandLink)
   --if gcd() > latency() then return end
-  --if wowex.keystate() then return end
+  if wowex.keystate() then return end
   if UnitIsDeadOrGhost("player") or debuffduration(Gouge,"target") > 0.3 or debuffduration(Sap,"target") > 0.3 or debuff(Cyclone,"target") or debuffduration(Blind,"target") > 0.3 or debuff(12826,"target") or buff(45438, "target") then return end
   -- or buff(Vanish,"player")
   local function InventorySlots()
@@ -431,6 +431,7 @@ Routine:RegisterRoutine(function()
     if subevent == "SPELL_CAST_SUCCESS" then
       local spellId, spellName, _, _, _, _, _, _, _, _, _, _, _ = select(12, ...)
       local myname = UnitName("player")
+      --[[
       if destName == myname and spellName == "Scatter Shot" and castable(Vanish) then
         cast(Vanish)
         Debug("Vanishing Scatter Shot!! ",19503)
@@ -439,6 +440,7 @@ Routine:RegisterRoutine(function()
         cast(Vanish)
         Debug("Vanishing Hammer of Justice!! ",853)
       end
+      ]]
       if destName ~= myname and spellName == "Vanish" and castable(Vanish) then
         if UnitIsEnemy(destName) then
           cast(Vanish)
@@ -475,6 +477,7 @@ Routine:RegisterRoutine(function()
             if sourceName == ObjectName(object) then
               if (ObjectType(object) == 4 or ObjectType(object) == 5) and UnitCanAttack("player",object) then
                 if castable(Shadowstep,object) and cooldown(Kick) <= 1 and cansee("player",object) and not buff(Stealth,"player") and distance("player",object) >= 5 and not UnitTargetingUnit("player",object) then
+                  kickobject = Object(object)
                   cast(Shadowstep,object)
                   FaceObject(object)
                   MoveForwardStop()
@@ -512,13 +515,14 @@ Routine:RegisterRoutine(function()
   local function Interrupt()
     if UnitAffectingCombat("player") and not buff(Stealth,"player") then
       if buff(36554,"player") then
+        cast(Kick,kickobject)
         kickNameplate(Kick, true)
       end 
       --for i, object in ipairs(Objects()) do
       for object in OM:Objects(OM.Types.Units) do
-        if (ObjectType(object) == 3 or ObjectType(object) == 4 or ObjectType(object) == 5) and UnitCanAttack("player",object) and UnitAffectingCombat("player")  then
+        if (ObjectType(object) == 3 or ObjectType(object) == 4 or ObjectType(object) == 5) and UnitCanAttack("player",object) then
           local kickclass, _, _ = UnitClass(object)
-          if isCasting(object) and not kickclass == "Hunter" then
+          if isCasting(object) and kickclass ~= "Hunter" then
             local _, _, _, _, endTime, _, _, _ = UnitCastingInfo(object);
             local finish = endTime/1000 - GetTime()
             if finish <= 1 and castable(Kick,object) and melee() then
@@ -532,7 +536,7 @@ Routine:RegisterRoutine(function()
               Debug("Gouged " .. UnitName(object) .. " at " .. finish,38764)
             end 
           end 
-          if isChanneling(object) and not kickclass == "Hunter" then
+          if isChanneling(object) and kickclass ~= "Hunter" then
             local _, _, _, startTime = UnitChannelInfo(object);
             local startTime = startTime/1000 - GetTime()
             if startTime <= 1 and castable(Kick,object) and melee() then
@@ -552,6 +556,7 @@ Routine:RegisterRoutine(function()
   local function Cooldowns()
     if UnitExists("target") and UnitCanAttack("player","target") and UnitAffectingCombat("player") and not buff(Stealth,"player") and not mounted() then
       if buff(36554,"player") then
+        cast(Kick,kickobject)
         kickNameplate(Kick, true)
       end 
       if castable(Preparation) and not castable(Vanish) and not castable(Evasion) then
@@ -637,13 +642,13 @@ Routine:RegisterRoutine(function()
       if buff(Stealth,"player") or buff(26888,"player") then
         local openerclass, _, _ = UnitClass("target")
         if not IsBehind("target") then
-          if wowex.wowexStorage.read("openerfrontal") == "Cheap Shot" and castable(CheapShot) and not openerclass == "Mage" then
+          if wowex.wowexStorage.read("openerfrontal") == "Cheap Shot" and melee() and castable(CheapShot) and not openerclass == "Mage" then
             cast(Premeditation, "target")
             cast(CheapShot,"target")
           end
         end
         if IsBehind("target") then
-          if wowex.wowexStorage.read("openerbehind") == "Garrote" and castable(Garrote) and (openerclass == "Mage" or openerclass == "Priest" or openerclass == "Shaman" or openerclass == "Warlock" or openerclass == "Druid") and (not openerclass == "Hunter" or buff(34471,"target")) and not debuff(18469, "target") and GetUnitSpeed("target") <= 10 then
+          if wowex.wowexStorage.read("openerbehind") == "Garrote" and castable(Garrote) and (openerclass == "Mage" or openerclass == "Priest" or openerclass == "Shaman" or openerclass == "Warlock" or openerclass == "Druid") and (openerclass ~= "Hunter" or buff(34471,"target")) and not debuff(18469, "target") and GetUnitSpeed("target") <= 10 then
             cast(Premeditation, "target")
             cast(Garrote,"target")
           end
@@ -661,6 +666,7 @@ Routine:RegisterRoutine(function()
   local function Dps()
     if UnitAffectingCombat("player") and UnitExists("target") and UnitCanAttack("player","target") and not buff(Stealth,"player") then
       if buff(36554,"player") then
+        cast(Kick,kickobject)
         kickNameplate(Kick, true)
       end 
       local class, _, _ = UnitClass("target")
@@ -816,6 +822,7 @@ Routine:RegisterRoutine(function()
         Dismount()
       end
       if buff(36554,"player") then
+        cast(Kick,kickobject)        
         kickNameplate(Kick, true)
       end 
       --if itemID ~= 29124 then
@@ -1047,8 +1054,8 @@ Routine:RegisterRoutine(function()
     ]]
 
   local function Hide()
-    if (buff(Stealth,"player") --[[or buff(Vanish,"player")]]) and not UnitAffectingCombat("player") and UnitCanAttack("player","target") and not melee() and not IsPoisoned("player") then
-      if UnitExists("target") and distance("player","target") <= 35 and not UnitAffectingCombat("player") then
+    if (not buff(Stealth,"player") --[[or buff(Vanish,"player")]]) and not UnitAffectingCombat("player") and UnitCanAttack("player","target") and not melee() and not IsPoisoned("player") then
+      if UnitExists("target") and distance("player","target") <= 35 then
         Dismount()
         cast(Stealth)
         cast(Premeditation,"target")
@@ -1091,7 +1098,7 @@ Routine:RegisterRoutine(function()
   --end
 end, Routine.Classes.Rogue, Routine.Specs.Rogue)
 Routine:LoadRoutine(Routine.Specs.Rogue)
-print("\124cffff80ff\124Tinterface\\ChatFrame\\UI-ChatIcon-Blizz:12:20:0:0:32:16:4:28:0:16\124t [Yosh] whispers: Hello, " .. UnitName("player") .. ". We have detected an \"UNAUTHORIZED THIRD PARTY PROGRAM\" running on your computer. Have fun with it.:)")
+print("\124cffff80ff\124Tinterface\\ChatFrame\\UI-ChatIcon-Blizz:12:20:0:0:32:16:4:28:0:16\124t [Yosh] whispers: Hello, " .. UnitName("player") .. " Welcome to my routine :)")
 
 local example = {
   key = "tinkr_configs",
