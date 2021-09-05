@@ -642,7 +642,7 @@ Routine:RegisterRoutine(function()
       if buff(Stealth,"player") or buff(26888,"player") then
         local openerclass, _, _ = UnitClass("target")
         if not IsBehind("target") then
-          if wowex.wowexStorage.read("openerfrontal") == "Cheap Shot" and melee() and castable(CheapShot) and not openerclass == "Mage" then
+          if wowex.wowexStorage.read("openerfrontal") == "Cheap Shot" and melee() and castable(CheapShot) and openerclass ~= "Mage" then
             cast(Premeditation, "target")
             cast(CheapShot,"target")
           end
