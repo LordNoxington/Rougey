@@ -154,8 +154,8 @@ Draw:Sync(function(draw)
     draw:Circle(tx, ty, tz, 8)
   end
 
-  for object in OM:Objects(OM.Types.Players) do
-    if (ObjectType(object) == 4 or ObjectType(object) == 5) and UnitCanAttack("player",object) then
+  for object in OM:Objects(OM.Types.Player) do
+    if UnitCanAttack("player",object) then
       if UnitTargetingUnit(object,"player") then
         local px, py, pz = ObjectPosition("player")
         local tx, ty, tz = ObjectPosition(object)
@@ -277,6 +277,7 @@ end
 
 Routine:RegisterRoutine(function()
   local GetComboPoints = GetComboPoints("player","target")
+  local inInstance, instanceType = IsInInstance()
   --local mainHandLink = GetInventoryItemLink("player", GetInventorySlotInfo("MainHandSlot"))
   --local _, _, _, _, _, _, itemType5 = GetItemInfo(mainHandLink)
   --if gcd() > latency() then return end
@@ -473,9 +474,9 @@ Routine:RegisterRoutine(function()
         local spellId, spellName, _, _, _, _, _, _, _, _, _, _, _ = select(12, ...)
         if spellName == "Fear" or spellName == "Polymorph" or spellName == "Regrowth" or spellName == "Cyclone" or spellName == "Greater Heal" or spellName == "Flash Heal" then
           --for i, object in ipairs(Objects()) do
-          for object in OM:Objects(OM.Types.Players) do
+          for object in OM:Objects(OM.Types.Player) do
             if sourceName == ObjectName(object) then
-              if (ObjectType(object) == 4 or ObjectType(object) == 5) and UnitCanAttack("player",object) then
+              if UnitCanAttack("player",object) then
                 if castable(Shadowstep,object) and cooldown(Kick) <= 1 and cansee("player",object) and not buff(Stealth,"player") and distance("player",object) >= 5 and not UnitTargetingUnit("player",object) then
                   kickobject = Object(object)
                   cast(Shadowstep,object)
@@ -515,12 +516,11 @@ Routine:RegisterRoutine(function()
   local function Interrupt()
     if UnitAffectingCombat("player") and not buff(Stealth,"player") then
       if buff(36554,"player") then
-        cast(Kick,kickobject)
         kickNameplate(Kick, true)
       end 
       --for i, object in ipairs(Objects()) do
-      for object in OM:Objects(OM.Types.Units) do
-        if (ObjectType(object) == 3 or ObjectType(object) == 4 or ObjectType(object) == 5) and UnitCanAttack("player",object) then
+      for object in OM:Objects(OM.Types.Unit) do
+        if UnitCanAttack("player",object) then
           local kickclass, _, _ = UnitClass(object)
           if isCasting(object) and kickclass ~= "Hunter" then
             local _, _, _, _, endTime, _, _, _ = UnitCastingInfo(object);
@@ -556,7 +556,6 @@ Routine:RegisterRoutine(function()
   local function Cooldowns()
     if UnitExists("target") and UnitCanAttack("player","target") and UnitAffectingCombat("player") and not buff(Stealth,"player") and not mounted() then
       if buff(36554,"player") then
-        cast(Kick,kickobject)
         kickNameplate(Kick, true)
       end 
       if castable(Preparation) and not castable(Vanish) and not castable(Evasion) then
@@ -574,8 +573,8 @@ Routine:RegisterRoutine(function()
     end
     --Blind on
     if trinketUsedBy ~= nil then
-      if castable(Blind) and health("target") <= 90 and not buff(Stealth,"player") then
-        if (ObjectType(trinketUsedBy) == 4 or ObjectType(trinketUsedBy) == 5) and UnitCanAttack("player",trinketUsedBy) and distance("player",trinketUsedBy) <= 15 then
+      if health("target") <= 90 and not buff(Stealth,"player") then
+        if ObjectType(trinketUsedBy) == 4 and UnitCanAttack("player",trinketUsedBy) and distance("player",trinketUsedBy) <= 15 then
           if UnitTargetingUnit(trinketUsedBy,"target") and not UnitTargetingUnit("player",trinketUsedBy) and not IsPoisoned(trinketUsedBy) then
             cast(Blind,trinketUsedBy)
             trinketUsedBy = nil
@@ -585,7 +584,7 @@ Routine:RegisterRoutine(function()
             trinketUsedBy = nil
             Debug("Blind off-target " .. UnitName(trinketUsedBy), 2094)
           end
-        elseif (ObjectType(trinketUsedBy) == 4 or ObjectType(trinketUsedBy) == 5) and UnitCanAttack("player",trinketUsedBy) and distance("player",trinketUsedBy) >= 15 then
+        elseif ObjectType(trinketUsedBy) == 4 and UnitCanAttack("player",trinketUsedBy) and distance("player",trinketUsedBy) >= 15 then
           if (UnitTargetingUnit(trinketUsedBy,"target") and not UnitTargetingUnit("player",trinketUsedBy) and not IsPoisoned(trinketUsedBy)) or (UnitTargetingUnit(trinketUsedBy,"player") and not UnitTargetingUnit("player",trinketUsedBy) and not IsPoisoned(trinketUsedBy)) then
             cast(Shadowstep,trinketUsedBy)
           end
@@ -666,7 +665,6 @@ Routine:RegisterRoutine(function()
   local function Dps()
     if UnitAffectingCombat("player") and UnitExists("target") and UnitCanAttack("player","target") and not buff(Stealth,"player") then
       if buff(36554,"player") then
-        cast(Kick,kickobject)
         kickNameplate(Kick, true)
       end 
       local class, _, _ = UnitClass("target")
@@ -816,57 +814,36 @@ Routine:RegisterRoutine(function()
     end
   end
   local function Filler()
-    if melee() and not debuff(Sap,"target") and not debuff(Gouge,"target") and not debuff(Blind,"target") and not buff(Vanish,"player") and not buff(Stealth,"player") and UnitExists("target") and UnitCanAttack("player","target") and not buff(Shadowstep, 'player') then
+    if melee() and not debuff(Sap,"target") and not debuff(Gouge,"target") and not debuff(Blind,"target") and not buff(Vanish,"player") and not buff(Stealth,"player") and UnitExists("target") and UnitCanAttack("player","target") --[[and not buff(Shadowstep, 'player')]] then
       local fillerclass, _, _ = UnitClass("target")
       if mounted() then
         Dismount()
       end
       if buff(36554,"player") then
-        cast(Kick,kickobject)        
         kickNameplate(Kick, true)
-      end 
-      --if itemID ~= 29124 then
-      --  EquipItemByName(29124, 16)
-      --end 
-      --Backstab/SS if Hemorrhage is not learned on Daggers
-      --if itemType5 == "Daggers" and not IsSpellKnown(26864) then
-      --  if IsBehind() and castable(Backstab) then
-      --    cast(Backstab,"target")
-      --  end
-      --  if not IsBehind() and castable(SinisterStrike) then
-      --    cast(SinisterStrike,"target")
-      --  end
-      --end
-      --Cast Hemorrhage if its known
-      --if IsSpellKnown(26864) then 
-        if castable(Shiv, "target") and melee() and not debuff(11201,"target") and not buff(34471, "target") and not buff(31224, "target") and not buff(20594, "target") and not debuff(27187, "target") and not debuff(CheapShot, "target") and not debuff(KidneyShot, "taret") and GetComboPoints < 5 and moving("target") and (debuff(26864, "target") or fillerclass == "Rogue" or fillerclass == "Warrior" or fillerclass == "Shaman") --[[and debuff(26864 hemo, "target")]] then
+      end
+--[[
+      if not debuff(11201,"target") then
+        EquipItemByName(28189, 17)
+      elseif debuff(11201,"target") then
+        EquipItemByName(28310, 17)
+      end
+]]
+        if castable(Shiv, "target") and not debuff(11201,"target") and not buff(34471, "target") and not buff(31224, "target") and not buff(20594, "target") and not debuff(CheapShot, "target") and not debuff(KidneyShot, "target") and GetComboPoints < 5 and moving("target") and (debuff(26864, "target") or fillerclass == "Rogue" or fillerclass == "Warrior" or fillerclass == "Shaman") then
           --and UnitPower("player") >= 60
           Dismount()
           cast(Shiv, "target")
-          --EquipItemByName(29124, 16)
-
+          Debug("Shiv on " .. UnitName("target"),5938)
         end     
-        if castable(GhostlyStrike, "target") and melee() and not buff(GhostlyStrike,"player") and health() <= 90 and GetComboPoints < 5 and UnitTargetingUnit("target", "player") and UnitPowerType("target") ~= 0 then
+        if castable(GhostlyStrike, "target") and not buff(GhostlyStrike,"player") and health() <= 90 and GetComboPoints < 5 and UnitTargetingUnit("target", "player") and UnitPowerType("target") ~= 0 then
           Dismount()
           cast(GhostlyStrike, "target")
-          --EquipItemByName(29124, 16)
-
         end
-        if castable(Hemorrhage, "target") and melee() and (UnitPower("player") >= 70 or health("target") <= 40 or debuff(KidneyShot, "target")) then
-          -- and GetComboPoints < 5
+        if castable(Hemorrhage, "target") and (UnitPower("player") >= 70 or health("target") <= 40 or debuff(KidneyShot, "target")) then
           cast(Hemorrhage,"target")
-          --EquipItemByName(29124, 16)
-
-      --  end
+        end
       end
-      --SS Spam on everything else
-      --if not IsSpellKnown(26864) and itemType5 ~= "Daggers" then
-      --  if castable(SinisterStrike) then
-      --    cast(SinisterStrike,"target")
-      --  end
-      --end
     end
-  end
   --Poisons thanks rex
   function checkweaponenchants(hand)
     if not hand then return end
@@ -954,13 +931,12 @@ Routine:RegisterRoutine(function()
     end
   end
   local function pvp()
-    local inInstance, instanceType = IsInInstance()
     if (instanceType == "arena" or instanceType == "pvp") and castable(Stealth) and not mounted() and not IsPoisoned("player") then
       cast(Stealth)
     end
     --for i, object in ipairs(Objects()) do
-    for object in OM:Objects(OM.Types.Players) do
-      if (ObjectType(object) == 4 or ObjectType(object) == 5) and UnitCanAttack("player",object) and not UnitIsDeadOrGhost(object) then
+    for object in OM:Objects(OM.Types.Player) do
+      if UnitCanAttack("player",object) and not UnitIsDeadOrGhost(object) then
         if buff(Stealth,object) then
           if buff(Stealth,"player") and distance("player",object) <= 20 then
             TargetUnit(object)
@@ -976,8 +952,8 @@ Routine:RegisterRoutine(function()
         end 
       end
     end
-    for object in OM:Objects(OM.Types.Players) do
-      if (ObjectType(object) == 4 or ObjectType(object) == 5) and UnitCanAttack("player",object) and not UnitIsDeadOrGhost(object) and UnitAffectingCombat("player") then
+    for object in OM:Objects(OM.Types.Player) do
+      if UnitCanAttack("player",object) and not UnitIsDeadOrGhost(object) and UnitAffectingCombat("player") then
         if castable(Vanish) and not UnitAffectingCombat(object) and distance("player",object) <= 10 and GetUnitName("target") ~= ObjectName(object) then
           sapobject = Object(object)
           cast(26889,"player")
