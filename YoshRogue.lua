@@ -589,7 +589,7 @@ Routine:RegisterRoutine(function()
           if UnitCanAttack("player",object) then
             TargetUnit(object)
             FaceObject(object)
-            Eval('StartAttack()', 'target')
+            Eval('StartAttack()', 't')
           end
         end
       end
@@ -865,11 +865,12 @@ Routine:RegisterRoutine(function()
 
   local function healthstone()
     local healthstonelist = {22103, 22104, 22105}
-    if health() <= 40 then
+    if health() <= 40 and UnitAffectingCombat("player") then
       for i = 1, #healthstonelist do
         if GetItemCount(healthstonelist[i]) >= 1 and GetItemCooldown(healthstonelist[i]) == 0 then
           local healthstonename = GetItemInfo(healthstonelist[i])
           Eval('RunMacroText("/use ' .. healthstonename .. '")', 'player')
+          Debug("Healthstone used!!",22103)
         end
       end
     end
