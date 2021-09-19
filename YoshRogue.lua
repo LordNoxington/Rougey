@@ -585,7 +585,7 @@ Routine:RegisterRoutine(function()
 ]]
       for object in OM:Objects(OM.CreatureTypes) do
         local totemname = ObjectName(object)
-        if totemname == "Stoneskin Totem" or totemname == "Windfury Totem" or totemname == "Poison Cleansing Totem" or totemname == "Mana Tide Totem" or totemname == "Grounding Totem" then
+        if distance("player",object) <= 15 and totemname == "Stoneskin Totem" or totemname == "Windfury Totem" or totemname == "Poison Cleansing Totem" or totemname == "Mana Tide Totem" or totemname == "Grounding Totem" then
           if UnitCanAttack("player",object) then
             TargetUnit(object)
             FaceObject(object)
