@@ -868,6 +868,18 @@ Routine:RegisterRoutine(function()
     end
   end
 
+  local function healthstone()
+    local healthstonelist = {22103, 22104, 22105}
+    if health() <= 40 then
+      for i = 1, #healthstonelist do
+        if GetItemCount(healthstonelist[i]) >= 1 and GetItemCooldown(healthstonelist[i]) == 0 then
+          local healthstonename = GetItemInfo(healthstonelist[i])
+          Eval('RunMacroText("/use ' .. healthstonename .. '")', 'player')
+        end
+      end
+    end
+  end
+
   function checkweaponenchants(hand)
     if not hand then return end
     local mainhandbuff, _, _, _, offhandbuff, _, _, _ = GetWeaponEnchantInfo()
@@ -955,7 +967,7 @@ Routine:RegisterRoutine(function()
   end
 
   local function pvp()
-    if (instanceType == "arena" or instanceType == "pvp") and castable(Stealth) and not mounted() and not IsPoisoned("player") and not isCasting("player") then
+    if (instanceType == "arena" or instanceType == "pvp") and castable(Stealth) and not mounted() and not IsPoisoned("player") and not isCasting("player") and not (buff(301089,"player") or buff(301091,"player")) then
       cast(Stealth)
       --EquipItemByName(28310, 17)
     end
@@ -1079,6 +1091,7 @@ Routine:RegisterRoutine(function()
     if Hide() then return true end
     --if Distract() then return true end
     if Poison() then return true end
+    if healthstone() then return true end
   end
   --if wowex.wowexStorage.read('autoloot') and not UnitAffectingCombat("player") and (not buff(Stealth,"player") or not buff(Vanish,"player")) and InventorySlots() > 2 then
   --  Loot()
