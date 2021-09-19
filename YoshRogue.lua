@@ -287,7 +287,12 @@ Routine:RegisterRoutine(function()
   --local _, _, _, _, _, _, itemType5 = GetItemInfo(mainHandLink)
   --if gcd() > latency() then return end
   if wowex.keystate() then return end
-  if UnitIsDeadOrGhost("player") or debuffduration(1020,"target") > 0.1 or debuffduration(Gouge,"target") > 0.3 or debuffduration(Sap,"target") > 0.3 or debuff(Cyclone,"target") or debuffduration(Blind,"target") > 0.3 or debuff(12826,"target") or buff(45438, "target") then return end
+  if UnitIsDeadOrGhost("player") or debuffduration(1020,"target") > 0.2 or debuffduration(Gouge,"target") > 0.2 or debuffduration(Sap,"target") > 0.2 or debuff(Cyclone,"target") or debuffduration(Blind,"target") > 0.2 or debuff(12826,"target") or buff(45438, "target") then 
+    if IsPlayerAttacking("target") then
+    Eval('RunMacroText("/stopattack")', 'player')
+    else return end
+  end
+  
   -- or buff(Vanish,"player")
 
   local function InventorySlots()
@@ -469,6 +474,10 @@ Routine:RegisterRoutine(function()
           Debug("Cloaking Pyroblast!! ",33938)
         end
       end
+      if spellName == "Blink" then
+        local blinktime = GetTime()
+        blinkcd = blinktime + 15
+      end
       --[[
       if spellName == "Feign Death" then
         TargetNearestEnemy()
@@ -525,6 +534,9 @@ Routine:RegisterRoutine(function()
 
   local function Interrupt()
     if UnitAffectingCombat("player") and not buff(Stealth,"player") then
+      if mounted() then
+        Dismount()
+      end
       if buff(36554,"player") then
         kickNameplate(Kick, true)
       end
@@ -685,20 +697,20 @@ Routine:RegisterRoutine(function()
   ]]
 
   local function Opener()
-    if UnitCanAttack("player","target") then
+    if UnitCanAttack("player","target") and distance("player","target") <= 10 then
       if buff(Stealth,"player") or buff(26888,"player") then
         if not IsBehind("target") then
-          if wowex.wowexStorage.read("openerfrontal") == "Cheap Shot" and castable(CheapShot) and targetclass ~= "Mage" and distance("player","target") <= 10 and not buff(34471,"target") then
+          if wowex.wowexStorage.read("openerfrontal") == "Cheap Shot" and castable(CheapShot) and (targetclass ~= "Mage" or (GetTime() <= blinkcd)) and not buff(34471,"target") then
             cast(Premeditation, "target")
             cast(CheapShot,"target")
           end
         end
         if IsBehind("target") then
-          if wowex.wowexStorage.read("openerbehind") == "Garrote" and castable(Garrote) and distance("player","target") <= 10 and (targetclass == "Mage" or targetclass == "Priest" or targetclass == "Shaman" or targetclass == "Warlock" or targetclass == "Druid") and (targetclass ~= "Hunter" or buff(34471,"target")) and not debuff(18469, "target") and GetUnitSpeed("target") <= 10 then
+          if wowex.wowexStorage.read("openerbehind") == "Garrote" and castable(Garrote) and (targetclass == "Mage" or targetclass == "Priest" or targetclass == "Shaman" or targetclass == "Warlock" or targetclass == "Druid") and (targetclass ~= "Hunter" or buff(34471,"target")) and not debuff(18469, "target") and GetUnitSpeed("target") <= 10 then
             cast(Premeditation, "target")
             cast(Garrote,"target")
           end
-          if wowex.wowexStorage.read("openerbehind") == "Garrote" and castable(CheapShot) and not buff(34471,"target") and distance("player","target") <= 10 then
+          if wowex.wowexStorage.read("openerbehind") == "Garrote" and castable(CheapShot) and not buff(34471,"target") then
             cast(Premeditation, "target")
             cast(CheapShot,"target")
           end
@@ -843,7 +855,7 @@ Routine:RegisterRoutine(function()
   end
 
   local function Filler()
-    if not debuff(Sap,"target") and not debuff(Gouge,"target") and not debuff(Blind,"target") and not buff(Vanish,"player") and not buff(Stealth,"player") and UnitExists("target") and UnitCanAttack("player","target") --[[and not buff(Shadowstep, 'player')]] then
+    if not debuff(Sap,"target") and not debuff(Gouge,"target") and not debuff(Blind,"target") and not buff(Vanish,"player") and not buff(Stealth,"player") and UnitExists("target") and UnitCanAttack("player","target") then
       if buff(36554,"player") then
         kickNameplate(Kick, true)
       end
