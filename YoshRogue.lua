@@ -844,14 +844,10 @@ Routine:RegisterRoutine(function()
 
   local function Filler()
     if not debuff(Sap,"target") and not debuff(Gouge,"target") and not debuff(Blind,"target") and not buff(Vanish,"player") and not buff(Stealth,"player") and UnitExists("target") and UnitCanAttack("player","target") --[[and not buff(Shadowstep, 'player')]] then
-      if mounted() then
-        Dismount()
-      end
       if buff(36554,"player") then
         kickNameplate(Kick, true)
       end
       if castable(Shiv, "target") and not debuff(11201,"target") and not buff(34471, "target") and not buff(31224, "target") and not buff(20594, "target") and not debuff(CheapShot, "target") and not debuff(KidneyShot, "target") and GetComboPoints < 5 and moving("target") and (debuff(26864, "target") or targetclass == "Rogue" or targetclass == "Warrior" or targetclass == "Mage") then
-        Dismount()
         cast(Shiv, "target")
         Debug("Shiv on " .. UnitName("target"),5938)
       --elseif castable(Shiv, "target") and not debuff(11398,"target") and debuff(11201,"target") and (targetclass == "Priest" or targetclass == "Mage") and not buff(34471, "target") and not buff(31224, "target") and not buff(20594, "target") and not debuff(CheapShot, "target") and not debuff(KidneyShot, "target") and GetComboPoints < 5 then
@@ -859,7 +855,6 @@ Routine:RegisterRoutine(function()
       --  Debug("Shiv for Mind Numbing on " .. UnitName("target"),5938)
       end     
       if castable(GhostlyStrike, "target") and not buff(GhostlyStrike,"player") and health() <= 90 and GetComboPoints < 5 and UnitTargetingUnit("target", "player") and UnitPowerType("target") ~= 0 then
-        Dismount()
         cast(GhostlyStrike, "target")
       end
       if castable(Hemorrhage, "target") and (UnitPower("player") >= 70 or health("target") <= 40 or debuff(KidneyShot, "target")) then
