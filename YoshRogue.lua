@@ -169,6 +169,45 @@ Draw:Sync(function(draw)
       end
     end
   end
+
+  for object in OM:Objects(OM.Types.Player) do
+    if UnitCanAttack("player",object) then
+    local tx, ty, tz = ObjectPosition(object)
+    local dist = distancetwo(object) 
+    local health = UnitHealth(object)
+    local class = UnitClass(object)
+    Draw:SetColor(0,255,0)
+    Draw:Text(round(dist).."y".." "..health.."%","GameFontNormalSmall", tx, ty, tz+2)
+      if UnitClass(object) == "Warrior" then
+        Draw:SetColor(198,155,109)
+        Draw:Text(class,"GameFontNormalSmall", tx, ty, tz+1)
+      elseif UnitClass(object) == "Warlock" then
+        Draw:SetColor(135,136,238)
+        Draw:Text(class,"GameFontNormalSmall", tx, ty, tz+1)
+      elseif UnitClass(object) == "Shaman" then
+        Draw:SetColor(0,112,221 )
+        Draw:Text(class,"GameFontNormalSmall", tx, ty, tz+1)
+      elseif UnitClass(object) == "Priest" then
+        Draw:SetColor(255,255,255)
+        Draw:Text(class,"GameFontNormalSmall", tx, ty, tz+1)
+      elseif UnitClass(object) == "Mage" then
+        Draw:SetColor(63,199,235)
+        Draw:Text(class,"GameFontNormalSmall", tx, ty, tz+1)
+      elseif UnitClass(object) == "Hunter" then
+        Draw:SetColor(170,211,114)
+        Draw:Text(class,"GameFontNormalSmall", tx, ty, tz+1)
+      elseif UnitClass(object) == "Paladin" then
+        Draw:SetColor(244,140,186 )
+        Draw:Text(class,"GameFontNormalSmall", tx, ty, tz+1)
+      elseif UnitClass(object) == "Rogue" then
+        Draw:SetColor(255,244,104)
+        Draw:Text(class,"GameFontNormalSmall", tx, ty, tz+1)
+      elseif UnitClass(object) == "Druid" then
+        Draw:SetColor(255,124,10)
+        Draw:Text(class,"GameFontNormalSmall", tx, ty, tz+1)
+      end
+    end
+  end
 end)
 
   --[[
@@ -1009,14 +1048,13 @@ Routine:RegisterRoutine(function()
           Debug("Vanish to Sap " .. UnitName(object), 26889)
         end   
       end
-    end
-
-    while(buff(26888,"player") and castable(Sap,sapobject) and not UnitAffectingCombat(sapobject)) do
+      while(buff(26888,"player") and castable(Sap,sapobject) and not UnitAffectingCombat(sapobject)) do
       TargetUnit(sapobject)
       FaceObject(sapobject)
       cast(Sap,sapobject)
       --TargetLastTarget()
       break
+      end
     end
   end
 
