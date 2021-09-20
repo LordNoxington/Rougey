@@ -162,6 +162,7 @@ Draw:Sync(function(draw)
   for object in OM:Objects(OM.Types.Player) do
     if UnitCanAttack("player",object) then
       if UnitTargetingUnit(object,"player") then
+        ObjectTargetingMe = Object(object)
         local ix, iy, iz = ObjectPosition(object)
         draw:SetColor(draw.colors.white)
         draw:Line(px,py,pz,ix,iy,iz,4,55)  
@@ -450,6 +451,12 @@ Routine:RegisterRoutine(function()
     end
   end
 
+  local function Dismounter()
+    if --[[UnitAffectingCombat("player") and UnitExists("target") and]] UnitIsPlayer(ObjectTargetingMe) and distance("player",ObjectTargetingMe) <= 45 then
+      Dismount()
+    end
+  end
+
   function f:COMBAT_LOG_EVENT_UNFILTERED(...)
     local timestamp, subevent, _, sourceGUID, sourceName, _, _, destGUID, destName, _, _ = ...
     local spellId, spellName, spellSchool
@@ -544,9 +551,6 @@ Routine:RegisterRoutine(function()
 
   local function Interrupt()
     if UnitAffectingCombat("player") and not buff(Stealth,"player") then
-      if mounted() then
-        Dismount()
-      end
       if buff(36554,"player") then
         kickNameplate(Kick, true)
       end
@@ -1099,6 +1103,7 @@ Routine:RegisterRoutine(function()
     --if Distract() then return true end
     if Poison() then return true end
     if healthstone() then return true end
+    if Dismounter() then return true end
   end
   --if wowex.wowexStorage.read('autoloot') and not UnitAffectingCombat("player") and (not buff(Stealth,"player") or not buff(Vanish,"player")) and InventorySlots() > 2 then
   --  Loot()
