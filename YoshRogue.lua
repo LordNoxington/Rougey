@@ -287,7 +287,7 @@ Routine:RegisterRoutine(function()
   --local _, _, _, _, _, _, itemType5 = GetItemInfo(mainHandLink)
   --if gcd() > latency() then return end
   if wowex.keystate() then return end
-  if UnitIsDeadOrGhost("player") or debuffduration(1020,"target") > 0.2 or debuffduration(Gouge,"target") > 0.2 or debuffduration(Sap,"target") > 0.2 or debuff(Cyclone,"target") or debuffduration(Blind,"target") > 0.2 or debuff(12826,"target") or buff(45438, "target") then 
+  if UnitIsDeadOrGhost("player") or debuffduration(1020,"target") > 0.2 or debuffduration(Gouge,"target") > 0.2 or debuffduration(Sap,"target") > 0.2 or debuff(Cyclone,"target") or debuffduration(Blind,"target") > 0.2 or debuff(12826,"target") or buff(45438, "target") or debuff(642,"target") or debuff(1022,"target") then 
     if IsPlayerAttacking("target") then
     Eval('RunMacroText("/stopattack")', 'player')
     else return end
@@ -411,7 +411,7 @@ Routine:RegisterRoutine(function()
   end
   
   local function Defensives()
-    if UnitAffectingCombat("player") and not mounted() then
+    if UnitAffectingCombat("player") and not mounted() and not buff(Stealth,"player") then
       --local defclass, _, _ = UnitClass("target")
       --if mounted() then
       --  Dismount()
@@ -421,6 +421,16 @@ Routine:RegisterRoutine(function()
       --end
       if health() <= 20 and not buff(30458, "player") then
         Eval('RunMacroText("/use 6")', 'player')
+      end
+      for object in OM:Objects(OM.CreatureTypes) do
+        local totemname = ObjectName(object)
+        if totemname == "Stoneskin Totem" or totemname == "Windfury Totem" or totemname == "Poison Cleansing Totem" or totemname == "Mana Tide Totem" or totemname == "Grounding Totem" then
+          if UnitCanAttack("player",object) and distance("player",object) <= 5 then
+            local totemobject = object
+            FaceObject(totemobject)
+            cast(Attack, totemobject)
+          end
+        end
       end
       --if castable(Evasion) and health() <= 95 and UnitTargetingUnit("target","player") and (defclass == "Warrior" or defclass == "Rogue") then
       --  cast(Evasion,"player")
@@ -595,17 +605,6 @@ Routine:RegisterRoutine(function()
         EquipItemByName(28310, 17)
       end
 ]]
-      for object in OM:Objects(OM.CreatureTypes) do
-        local totemname = ObjectName(object)
-        if totemname == "Stoneskin Totem" or totemname == "Windfury Totem" or totemname == "Poison Cleansing Totem" or totemname == "Mana Tide Totem" or totemname == "Grounding Totem" then
-          if UnitCanAttack("player",object) and distance("player",object) <= 5 then
-            TargetUnit(object)
-            FaceObject(object)
-            Eval('StartAttack()', 't')
-          end
-        end
-      end
-
       if castable(Preparation) and not castable(Vanish) and not castable(Evasion) then
         cast(Preparation)
         Debug("Prep used on " .. UnitName("player"), 14185)
