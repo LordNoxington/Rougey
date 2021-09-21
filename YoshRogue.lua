@@ -124,6 +124,14 @@ local function UnitTargetingUnit(unit1,unit2)
   end
 end
 
+function distanceto(object)
+  local X1, Y1, Z1 = ObjectPosition('player')
+  local X2, Y2, Z2 = ObjectPosition(object)
+  if X1 and Y1 and X2 and Y2 and Z1 and Z2 then
+    return math.sqrt(((X2 - X1) ^ 2) + ((Y2 - Y1) ^ 2) + ((Z2 - Z1) ^ 2))
+  end
+end
+
 Draw:Sync(function(draw)
   px, py, pz = ObjectPosition("player")
   tx, ty, tz = ObjectPosition("target")
@@ -173,7 +181,7 @@ Draw:Sync(function(draw)
   for object in OM:Objects(OM.Types.Player) do
     if UnitCanAttack("player",object) then
     local tx, ty, tz = ObjectPosition(object)
-    local dist = distance("player",object) 
+    local dist = distanceto(object)
     local health = UnitHealth(object)
     local class = UnitClass(object)
     Draw:SetColor(0,255,0)
@@ -459,6 +467,9 @@ Routine:RegisterRoutine(function()
       --end
       if health() <= 20 and not buff(30458, "player") then
         Eval('RunMacroText("/use 6")', 'player')
+      end
+      if health("target") <= 40 then
+        Eval('RunMacroText("/use Figurine - Nightseye Panther")', 'player')
       end
       for object in OM:Objects(OM.CreatureTypes) do
         local totemname = ObjectName(object)
