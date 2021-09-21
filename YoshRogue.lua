@@ -368,7 +368,7 @@ Routine:RegisterRoutine(function()
   if wowex.keystate() then return end
   if UnitIsDeadOrGhost("player") or debuffduration(1020,"target") > 0.2 or debuffduration(Gouge,"target") > 0.2 or debuffduration(Sap,"target") > 0.2 or debuff(Cyclone,"target") or debuffduration(Blind,"target") > 0.2 or debuff(12826,"target") or buff(45438, "target") or buff(642,"target") or buff(1022,"target") then 
     if IsPlayerAttacking("target") then
-    Eval('RunMacroText("/stopattack")', 'player')
+      Eval('RunMacroText("/stopattack")', 'player')
     else return end 
   end
   
@@ -602,7 +602,7 @@ Routine:RegisterRoutine(function()
 
     if subevent == "SPELL_CAST_START" then
       local spellId, spellName, _, _, _, _, _, _, _, _, _, _, _ = select(12, ...)
-      if spellName == "Fear" or spellName == "Polymorph" or spellName == "Regrowth" or spellName == "Cyclone" or spellName == "Greater Heal" or spellName == "Flash Heal" then
+      if spellName == "Fear" or spellName == "Polymorph" or spellName == "Regrowth" or spellName == "Cyclone" or spellName == "Greater Heal" or spellName == "Flash Heal" or spellname == "Healing Wave" then
         if health("target") <= 90 and not buff(Stealth,"player") then
           --for i, object in ipairs(Objects()) do
           for object in OM:Objects(OM.Types.Player) do
@@ -711,27 +711,26 @@ Routine:RegisterRoutine(function()
         cast(Preparation)
         Debug("Prep used on " .. UnitName("player"), 14185)
       end
-      --if castable(Shadowstep) and distance("player","target") >= 20 then
-      --  cast(Shadowstep, "target")
-      --end
+
       if castable(Sprint) and distance("player","target") >= 30 and UnitAffectingCombat("target") and not castable(Shadowstep) then
         cast(Sprint)
         Debug("Sprint used on " .. UnitName("player"), 11305)
       end
-    end
-    if trinketUsedBy ~= nil then
-      if health("target") <= 70 then
-        if ObjectType(trinketUsedBy) == 4 and UnitCanAttack("player",trinketUsedBy) and distance("player",trinketUsedBy) <= 15 then
-          if UnitTargetingUnit(trinketUsedBy,"target") and not UnitTargetingUnit("player",trinketUsedBy) and not UnitTargetingUnit("party1",trinketUsedBy) and not IsPoisoned(trinketUsedBy) then
-            FaceObject(trinketUsedBy)
-            cast(Blind,trinketUsedBy)
-            Debug("Blind off-target " .. UnitName(trinketUsedBy), 2094)
-            trinketUsedBy = nil
-          elseif UnitTargetingUnit(trinketUsedBy,"player") and not UnitTargetingUnit("player",trinketUsedBy) and not UnitTargetingUnit("party1",trinketUsedBy) and not IsPoisoned(trinketUsedBy) then
-            FaceObject(trinketUsedBy)
-            cast(Blind,trinketUsedBy)
-            Debug("Blind off-target " .. UnitName(trinketUsedBy), 2094)
-            trinketUsedBy = nil
+      
+      if trinketUsedBy ~= nil then
+        if health("target") <= 70 then
+          if ObjectType(trinketUsedBy) == 4 and UnitCanAttack("player",trinketUsedBy) and distance("player",trinketUsedBy) <= 15 then
+            if UnitTargetingUnit(trinketUsedBy,"target") and not UnitTargetingUnit("player",trinketUsedBy) and not UnitTargetingUnit("party1",trinketUsedBy) and not IsPoisoned(trinketUsedBy) then
+              FaceObject(trinketUsedBy)
+              cast(Blind,trinketUsedBy)
+              Debug("Blind off-target " .. UnitName(trinketUsedBy), 2094)
+              trinketUsedBy = nil
+            elseif UnitTargetingUnit(trinketUsedBy,"player") and not UnitTargetingUnit("player",trinketUsedBy) and not UnitTargetingUnit("party1",trinketUsedBy) and not IsPoisoned(trinketUsedBy) then
+              FaceObject(trinketUsedBy)
+              cast(Blind,trinketUsedBy)
+              Debug("Blind off-target " .. UnitName(trinketUsedBy), 2094)
+              trinketUsedBy = nil
+            end
           end
         end
       end
@@ -1118,10 +1117,14 @@ Routine:RegisterRoutine(function()
         end   
       end
       while(buff(26888,"player") and castable(Sap,sapobject) and not UnitAffectingCombat(sapobject)) do
-      TargetUnit(sapobject)
-      FaceObject(sapobject)
-      cast(Sap,sapobject)
-      --TargetLastTarget()
+        TargetUnit(sapobject)
+        FaceObject(sapobject)
+        cast(Sap,sapobject)
+        if debuff(Sap,"target") then
+          TargetLastTarget()
+        elseif distance("player",object) >= 15 then
+          TargetLastTarget()
+        end
       break
       end
     end
