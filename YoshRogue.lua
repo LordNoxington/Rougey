@@ -132,6 +132,10 @@ function distanceto(object)
   end
 end
 
+function round(num, numDecimalPlaces)
+  return tonumber(string.format("%." .. (numDecimalPlaces or 0) .. "f", num))
+end
+
 Draw:Sync(function(draw)
   px, py, pz = ObjectPosition("player")
   tx, ty, tz = ObjectPosition("target")
