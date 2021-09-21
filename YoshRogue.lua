@@ -177,7 +177,15 @@ Draw:Sync(function(draw)
       if UnitTargetingUnit(object,"player") then
         ObjectTargetingMe = Object(object)
         local ix, iy, iz = ObjectPosition(object)
-        draw:SetColor(draw.colors.white)
+        if distanceto(object) <= 8 then
+          draw:SetColor(0,255,0)
+        end
+        if distanceto(object) >= 8 and distanceto(object) <= 30 then
+          draw:SetColor(199,206,0)            
+        end
+        if distanceto(object) >= 30 then
+          draw:SetColor(255,0,0)
+        end 
         draw:Line(px,py,pz,ix,iy,iz,4,55)  
       end
     end
@@ -189,8 +197,25 @@ Draw:Sync(function(draw)
     local dist = distanceto(object)
     local health = UnitHealth(object)
     local class = UnitClass(object)
-    Draw:SetColor(0,255,0)
+    if distanceto(object) <= 8 then
+      draw:SetColor(0,255,0)
+    end
+    if distanceto(object) >= 8 and distanceto(object) <= 30 then
+      draw:SetColor(199,206,0)            
+    end
+    if distanceto(object) >= 30 then
+      draw:SetColor(255,0,0)
+    end  
     Draw:Text(round(dist).."y".." ","GameFontNormalSmall", tx, ty+2, tz+3)
+    if UnitHealth(object) >= 70 then
+      draw:SetColor(0,255,0)
+    end
+    if UnitHealth(object) >= 30 and UnitHealth(object) <= 70 then
+      draw:SetColor(199,206,0)
+    end
+    if UnitHealth(object) <= 30 then
+      draw:SetColor(255,0,0)
+    end
     Draw:Text(health.."%","GameFontNormalSmall", tx, ty+2, tz+2)
       if UnitClass(object) == "Warrior" then
         Draw:SetColor(198,155,109)
@@ -789,7 +814,7 @@ Routine:RegisterRoutine(function()
           end
         end
         if IsBehind("target") then
-          if wowex.wowexStorage.read("openerbehind") == "Garrote" and castable(Garrote) and (targetclass == "Mage" or targetclass == "Priest" or targetclass == "Shaman" or targetclass == "Warlock" or targetclass == "Druid") and (targetclass ~= "Hunter" or buff(34471,"target")) and not debuff(18469, "target") and UnitPowerType("target") ~= 0 and GetUnitSpeed("target") <= 10 then
+          if wowex.wowexStorage.read("openerbehind") == "Garrote" and castable(Garrote) and (targetclass == "Mage" or targetclass == "Priest" or targetclass == "Shaman" or targetclass == "Warlock" or targetclass == "Druid") and (targetclass ~= "Hunter" or buff(34471,"target")) and not debuff(18469, "target") and UnitPowerType("target") ~= 0 and GetUnitSpeed("target") <= 10 and not --[[DRUID FORMS]] (buff(9634,"target") or buff(768,"target") or buff(5487,"target") or buff(783,"target")) then
             cast(Premeditation, "target")
             cast(Garrote,"target")
           end
@@ -948,8 +973,8 @@ Routine:RegisterRoutine(function()
         cast(Shiv, "target")
         Debug("Shiv on " .. UnitName("target"),5938)
       --elseif castable(Shiv, "target") and not debuff(11398,"target") and debuff(11201,"target") and (targetclass == "Priest" or targetclass == "Mage") and not buff(34471, "target") and not buff(31224, "target") and not buff(20594, "target") and not debuff(CheapShot, "target") and not debuff(KidneyShot, "target") and GetComboPoints < 5 then
-        --cast(Shiv, "target")
-        --Debug("Shiv for Mind Numbing on " .. UnitName("target"),5938) 
+      --  cast(Shiv, "target")
+      --  Debug("Shiv for Mind Numbing on " .. UnitName("target"),5938) 
       end     
       if castable(GhostlyStrike, "target") and not buff(GhostlyStrike,"player") and health() <= 90 and GetComboPoints < 5 and UnitTargetingUnit("target", "player") and UnitPowerType("target") ~= 0 then
         cast(GhostlyStrike, "target")
