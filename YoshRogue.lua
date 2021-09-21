@@ -749,7 +749,7 @@ Routine:RegisterRoutine(function()
   ]]
 
   local function Opener()
-    if UnitCanAttack("player","target") and distance("player","target") <= 10 then
+    if UnitCanAttack("player","target") and distance("player","target") <= 5 then
       if buff(Stealth,"player") or buff(26888,"player") then
         if not IsBehind("target") then
           if wowex.wowexStorage.read("openerfrontal") == "Cheap Shot" and castable(CheapShot) and targetclass ~= "Mage" --[[or (GetTime() <= blinkcd)]] and not buff(34471,"target") then
