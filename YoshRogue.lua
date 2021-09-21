@@ -16,11 +16,11 @@
 --Add Vanish+SAP on units dropping out of combat DONEE
 --Add cloak on mage trinket and targeting me
 --Change garrotte check for UnitPowerType to classes DONE
---fix premed
+--fix premed DONE
 --add blind if they trinket kidney shot
 --Add Totem stomping DONE
---ADD CHEAPSHOT IF BLINK on cd
---change totem smack to attack object, so it doesnt change target
+--ADD CHEAPSHOT IF BLINK on cd DONE
+--change totem smack to attack object, so it doesnt change target DONE
 local Tinkr = ...
 local wowex = {}
 local Routine = Tinkr.Routine
@@ -116,13 +116,6 @@ Tinkr:require('scripts.cromulon.interface.minimap' , wowex)
         NON_COMBAT_PET = 12,
         GAS_CLOUD = 13
     }]]
-function UnitTargetingUnit(unit1,unit2)
-  if UnitIsVisible(UnitTarget(unit1)) and UnitIsVisible(unit2) then
-    if UnitGUID(UnitTarget(unit1)) == UnitGUID(unit2) then
-      return true
-    end
-  end
-end
 
 function distanceto(object)
   local X1, Y1, Z1 = ObjectPosition('player')
@@ -335,6 +328,7 @@ Routine:RegisterRoutine(function()
   local GetComboPoints = GetComboPoints("player","target")
   local inInstance, instanceType = IsInInstance()
   local targetclass = UnitClass("target")
+  local UnitClassification = UnitClassification("target")
   --local mainHandLink = GetInventoryItemLink("player", GetInventorySlotInfo("MainHandSlot"))
   --local _, _, _, _, _, _, itemType5 = GetItemInfo(mainHandLink)
   --if gcd() > latency() then return end
@@ -413,7 +407,7 @@ Routine:RegisterRoutine(function()
     end
   end
 
-  function IsPoisoned(unit)
+  local function IsPoisoned(unit)
     unit = unit or "player"
     for i=1,30 do
       local debuff,_,_,debufftype = UnitDebuff(unit,i)
@@ -429,6 +423,13 @@ Routine:RegisterRoutine(function()
       if UnitGUID(UnitTarget(unit1)) == UnitGUID(unit2) then
         return true
       end
+    end
+  end
+
+  local function isElite(unit)
+    local classification = UnitClassification(unit)
+    if classification == "elite" or classification == "rareelite" or classification == "worldboss" then
+      return true
     end
   end
   
@@ -587,7 +588,7 @@ Routine:RegisterRoutine(function()
       local kicktime = GetTime()
       local spellId, spellName, _, _, _, _, _, _, _, _, _, _, _ = select(12, ...)
       if spellName == "Kick" and sourceName == UnitName("player") and destName == UnitName("target") then
-        kickInterrupt = kicktime + 5
+        kickDuration = kicktime + 5
       end
     end
   end
@@ -788,9 +789,9 @@ Routine:RegisterRoutine(function()
         kickNameplate(Kick, true)
       end 
 
-      local kidneydelay = 0
-      if kickInterrupt ~= nil then
-        kidneydelay = kickInterrupt - GetTime()
+      kidneychain = 0
+      if kickDuration ~= nil then
+        kidneychain = kickDuration - GetTime()
       end
 
       if not IsPlayerAttacking("target") then
@@ -839,11 +840,11 @@ Routine:RegisterRoutine(function()
         --  end 
       --  end
       end
-      if castable(KidneyShot, "target") and kidneydelay >= 0.1 and kidneydelay <= 0.4 and not debuff(1330,"target") --[[and (class == "Priest" or class == "Druid" or class == "Shaman" or class == "Warlock" or class == "Mage" or class == "Paladin")]] then
+      if castable(KidneyShot, "target") and kidneychain >= 0.1 and kidneychain <= 0.4 and not debuff(1330,"target") --[[and (class == "Priest" or class == "Druid" or class == "Shaman" or class == "Warlock" or class == "Mage" or class == "Paladin")]] then
         cast(KidneyShot, "target")
         Debug("Kidney Shot to chain Kick on " .. UnitName("target"), 38764)
       end
-      if (debuff(18469,"target") or debuff(15487,"target")) and castable(KidneyShot, "target") and (debuffduration(18469,"target") < 0.2 or debuffduration(15487,"target")) and not debuff(CheapShot,"target") then
+      if (debuff(18469,"target") or debuff(15487,"target")) and castable(KidneyShot, "target") and (debuffduration(18469,"target") < 0.2 or debuffduration(15487,"target") < 0.2) and not debuff(CheapShot,"target") then
         cast(KidneyShot, "target")
         Debug("Kidney to Chain Silence on " .. UnitName("target"), 8643)
       end
@@ -859,7 +860,7 @@ Routine:RegisterRoutine(function()
         cast(26679, "target")
         Debug("Deadly Throw to Interrupt on " .. UnitName("target"), 26679)
       end
-      if castable(KidneyShot, "target") and GetComboPoints >= 4 and not debuff(KidneyShot, "target") and not debuff(1833, "target") and not debuff(1330, "target") and not debuff(18469, "target") and not buff(34471, "target") and kidneydelay <= 0.4 then
+      if castable(KidneyShot, "target") and GetComboPoints >= 4 and not debuff(KidneyShot, "target") and not debuff(1833, "target") and not debuff(1330, "target") and not debuff(18469, "target") and not buff(34471, "target") and kidneychain <= 0.4 and not isElite("target") then
         cast(KidneyShot, "target")
         Debug("BIG Kidney on " .. UnitName("target"), 8643)
       end
@@ -867,10 +868,10 @@ Routine:RegisterRoutine(function()
         cast(Rupture, "target")
         Debug("Rupture early on " .. UnitName("target"), 38764)
       end
-      if castable(SliceAndDice,"target") and GetComboPoints <= 4 and GetComboPoints >= 1 and not buff(SliceAndDice, "player") and not debuff(CheapShot, "target") and not debuff(1330, "target") and cooldown(KidneyShot) > 3 then
+      if castable(SliceAndDice,"target") and GetComboPoints <= 4 and GetComboPoints >= 1 and not buff(SliceAndDice, "player") and not debuff(CheapShot, "target") and not debuff(1330, "target") then
         cast(SliceAndDice,"target")
       end
-      if castable(Rupture, "target") and GetComboPoints >= 3 and UnitPowerType("target") ~= 0 and not debuff(CheapShot, "target") and not debuff(KidneyShot, "target") and health("target") >= 40 and cooldown(KidneyShot) > 3 then
+      if castable(Rupture, "target") and GetComboPoints >= 3 and UnitPowerType("target") ~= 0 and not debuff(CheapShot, "target") and not debuff(KidneyShot, "target") and health("target") >= 40 then
          cast(Rupture, "target")
       end
       --if castable(SliceAndDice, 'target') and GetComboPoints >= 2 and buffduration(SliceAndDice, 'player') <= 1 then
