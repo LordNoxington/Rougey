@@ -423,6 +423,14 @@ Routine:RegisterRoutine(function()
       end
     end
   end
+
+  local function UnitTargetingUnit(unit1,unit2)
+    if UnitIsVisible(UnitTarget(unit1)) and UnitIsVisible(unit2) then
+      if UnitGUID(UnitTarget(unit1)) == UnitGUID(unit2) then
+        return true
+      end
+    end
+  end
   
   local function Execute()
     --*Eviscerate=Attack Power * (Number of Combo Points used * 0.03) * abitrary multiplier to account for Auto Attacks while pooling
