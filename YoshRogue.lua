@@ -116,7 +116,7 @@ Tinkr:require('scripts.cromulon.interface.minimap' , wowex)
         NON_COMBAT_PET = 12,
         GAS_CLOUD = 13
     }]]
-local function UnitTargetingUnit(unit1,unit2)
+function UnitTargetingUnit(unit1,unit2)
   if UnitIsVisible(UnitTarget(unit1)) and UnitIsVisible(unit2) then
     if UnitGUID(UnitTarget(unit1)) == UnitGUID(unit2) then
       return true
@@ -752,7 +752,7 @@ Routine:RegisterRoutine(function()
     if UnitCanAttack("player","target") and distance("player","target") <= 10 then
       if buff(Stealth,"player") or buff(26888,"player") then
         if not IsBehind("target") then
-          if wowex.wowexStorage.read("openerfrontal") == "Cheap Shot" and castable(CheapShot) and (targetclass ~= "Mage" or (GetTime() <= blinkcd)) and not buff(34471,"target") then
+          if wowex.wowexStorage.read("openerfrontal") == "Cheap Shot" and castable(CheapShot) and targetclass ~= "Mage" --[[or (GetTime() <= blinkcd)]] and not buff(34471,"target") then
             cast(Premeditation, "target")
             cast(CheapShot,"target")
           end
