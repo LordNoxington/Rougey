@@ -173,7 +173,7 @@ Draw:Sync(function(draw)
   for object in OM:Objects(OM.Types.Player) do
     if UnitCanAttack("player",object) then
     local tx, ty, tz = ObjectPosition(object)
-    local dist = distancetwo(object) 
+    local dist = distance("player",object) 
     local health = UnitHealth(object)
     local class = UnitClass(object)
     Draw:SetColor(0,255,0)
@@ -333,8 +333,6 @@ Routine:RegisterRoutine(function()
     else return end
   end
   
-  -- or buff(Vanish,"player")
-
   local function InventorySlots()
     local slotsfree = 0
     for i = 0, 4 do
@@ -466,7 +464,7 @@ Routine:RegisterRoutine(function()
         local totemname = ObjectName(object)
         if totemname == "Stoneskin Totem" or totemname == "Windfury Totem" or totemname == "Poison Cleansing Totem" or totemname == "Mana Tide Totem" or totemname == "Grounding Totem" then
           if UnitCanAttack("player",object) and distance("player",object) <= 5 then
-            local totemobject = object
+            local totemobject = Object(object)
             FaceObject(totemobject)
             cast(Attack, totemobject)
           end
@@ -504,14 +502,13 @@ Routine:RegisterRoutine(function()
     if subevent == "SPELL_CAST_SUCCESS" then
       local spellId, spellName, _, _, _, _, _, _, _, _, _, _, _ = select(12, ...)
       local myname = UnitName("player")
-      --[[
-      if destName ~= myname and spellName == "Vanish" and castable(Vanish) then
+      local castobject = Object(sourceName)
+      if spellName == "Vanish" and (sourceName ~= myname) and castable(Vanish) then
         if UnitIsEnemy(destName) then
           cast(Vanish)
           Debug("Vanshing to avoid Rogue opener",1856)
         end
       end
-      ]]
       if destName == myname and spellName == "Death Coil" then
         if castable(Vanish) then
           cast(Vanish)
@@ -534,11 +531,9 @@ Routine:RegisterRoutine(function()
         local blinktime = GetTime()
         blinkcd = blinktime + 15
       end
-      --[[
-      if spellName == "Feign Death" then
-        TargetNearestEnemy()
+      if spellName == "Feign Death" and distance("player",castobject) <= 10 then
+        TargetUnit(castobject)
       end
-      ]]
     end
 
     if subevent == "SPELL_CAST_START" then
