@@ -520,6 +520,11 @@ Routine:RegisterRoutine(function()
       if health() <= 40 then
         Eval('RunMacroText("/use Master Healthstone")', 'player')
       end
+      if instanceType ~= "arena" and wowex.wowexStorage.read("thistletea") then
+        if UnitIsPlayer("target") and UnitPower("player") <= 30 and debuff(KidneyShot,"target") then
+          Eval('RunMacroText("/use Thistle Tea")', 'player')
+        end
+      end 
       for object in OM:Objects(OM.CreatureTypes) do
         local totemname = ObjectName(object)
         if totemname == "Stoneskin Totem" or totemname == "Windfury Totem" or totemname == "Poison Cleansing Totem" or totemname == "Mana Tide Totem" or totemname == "Grounding Totem" or totemname == "Earthbind Totem" then
@@ -813,11 +818,11 @@ Routine:RegisterRoutine(function()
           end
         end
         if IsBehind("target") then
-          if wowex.wowexStorage.read("openerbehind") == "Garrote" and castable(Garrote) and (targetclass == "Mage" or targetclass == "Priest" or targetclass == "Shaman" or targetclass == "Warlock" or targetclass == "Druid") and (targetclass ~= "Hunter" or buff(34471,"target")) and not debuff(18469, "target") and UnitPowerType("target") ~= 0 and GetUnitSpeed("target") <= 10 and not --[[DRUID FORMS]] (buff(9634,"target") or buff(768,"target") or buff(5487,"target") or buff(783,"target")) then
+          if --[[wowex.wowexStorage.read("openerbehind") == "Garrote" and]] castable(Garrote) and (targetclass == "Mage" or targetclass == "Priest" or targetclass == "Shaman" or targetclass == "Warlock" or targetclass == "Druid") and (targetclass ~= "Hunter" or buff(34471,"target")) and not debuff(18469, "target") and UnitPowerType("target") ~= 0 and GetUnitSpeed("target") <= 10 and not --[[DRUID FORMS]] (buff(9634,"target") or buff(768,"target") or buff(5487,"target") or buff(783,"target")) then
             cast(Premeditation, "target")
             cast(Garrote,"target")
           end
-          if wowex.wowexStorage.read("openerbehind") == "Garrote" and castable(CheapShot) and not buff(34471,"target") then
+          if --[[wowex.wowexStorage.read("openerbehind") == "Garrote" and]] castable(CheapShot) and not buff(34471,"target") then
             cast(Premeditation, "target")
             cast(CheapShot,"target")
           end
@@ -846,7 +851,7 @@ Routine:RegisterRoutine(function()
 
       if castable(SliceAndDice) and GetComboPoints <= 0 and not buff(SliceAndDice,"player") and distance("player","target") <= 7 and UnitPower("player") >= 40 and not (isCasting("target") or isChanneling("target")) then
         TargetLastTarget()
-        if UnitExists("target") and GetComboPoints >=1 then
+        if UnitExists("target") and GetComboPoints >= 1 then
           cast(SliceAndDice)
           TargetLastTarget()
           Debug("Slice and Dice on target change", 6774)
@@ -896,7 +901,7 @@ Routine:RegisterRoutine(function()
         cast(KidneyShot, "target")
         Debug("Kidney to Chain Silence on " .. UnitName("target"), 8643)
       end
-      if castable(Eviscerate, "target") and GetComboPoints >= 3 and UnitHealth("target") <= 15 and UnitIsPlayer("target") then
+      if castable(Eviscerate, "target") and GetComboPoints >= 3 and UnitHealth("target") <= 20 and UnitIsPlayer("target") then
         cast(Eviscerate, "target")
         Debug("Uncalculated Execute on " .. UnitName("target"), 26865)
       end
@@ -912,7 +917,7 @@ Routine:RegisterRoutine(function()
         cast(KidneyShot, "target")
         Debug("BIG Kidney on " .. UnitName("target"), 8643)
       end
-      if castable(Rupture, "target") and GetComboPoints >= 1 and targetclass == "Rogue" and not debuff(26867, "target") and not debuff(CheapShot, "target") and (not debuff(KidneyShot,"target") or debuffduration(KidneyShot,"target") < 1) then
+      if castable(Rupture, "target") and GetComboPoints >= 2 and targetclass == "Rogue" and not debuff(26867, "target") and not debuff(CheapShot, "target") and (not debuff(KidneyShot,"target") or debuffduration(KidneyShot,"target") < 1) then
         cast(Rupture, "target")
         Debug("Rupture early on " .. UnitName("target"), 38764)
       end
@@ -1215,10 +1220,10 @@ Routine:RegisterRoutine(function()
     --if healthstone() then return true end
     if Dismounter() then return true end
   end
-  --if wowex.wowexStorage.read('autoloot') and not UnitAffectingCombat("player") and (not buff(Stealth,"player") or not buff(Vanish,"player")) and InventorySlots() > 2 then
-  --  Loot()
-  --  return true 
-  --end
+  if wowex.wowexStorage.read('autoloot') and not UnitAffectingCombat("player") and (not buff(Stealth,"player") or not buff(Vanish,"player")) and InventorySlots() > 2 then
+    Loot()
+    return true 
+  end
 end, Routine.Classes.Rogue, Routine.Specs.Rogue)
 Routine:LoadRoutine(Routine.Specs.Rogue)
 print("\124cffff80ff\124Tinterface\\ChatFrame\\UI-ChatIcon-Blizz:12:20:0:0:32:16:4:28:0:16\124t [Yosh] whispers: Hello, " .. UnitName("player") .. " Welcome to my routine :)")
@@ -1276,6 +1281,7 @@ local example = {
 }
 --wowex.build_rotation_gui(example)
 local button_example = {
+  --[[
   {
     key = "useStealth",
     buttonname = "useStealth",
@@ -1296,7 +1302,7 @@ local button_example = {
     parent = "useStealth",
     sety = "TOPRIGHT"
   }
-  
+  ]]
 }
 wowex.button_factory(button_example)
 Draw:Enable()
@@ -1347,6 +1353,7 @@ local mytable = {
         options = {"Instant", "Wound","Crippling", "None"} },
         { key = "offhandpoison", width = 175, label = "Offhand", text = wowex.wowexStorage.read("offhandpoison"), type = "dropdown",
         options = {"Deadly", "MindNumbing","Crippling","None"} },
+        { key = "thistletea",  type = "checkbox", text = "Use Thistle Tea?" , desc = "Will use on targets during Kidney Shot" },
         { key = "heading", type = "heading", color = 'FFF468', text = "Stealth" },
         {type = "text", text = "DynOM = Scans the area around you for NPC aggro ranges and puts you into stealth when you get close to them.", color = 'FFF468'},
         {type = "text", text = "DynTarget = Stealthes you when you're near your TARGET's aggro range.", color = 'FFF468'},       
