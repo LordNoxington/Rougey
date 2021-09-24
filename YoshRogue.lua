@@ -514,12 +514,12 @@ Routine:RegisterRoutine(function()
       if health() <= 20 and not buff(30458, "player") then
         Eval('RunMacroText("/use 6")', 'player')
       end
-      if health("target") <= 40 then
+      if UnitIsPlayer("target") and health("target") <= 40 then
         Eval('RunMacroText("/use Figurine - Nightseye Panther")', 'player')
       end
-      if health() <= 40 then
-        Eval('RunMacroText("/use Master Healthstone")', 'player')
-      end
+      --if health() <= 40 then
+      --  Eval('RunMacroText("/use Master Healthstone")', 'player')
+      --end
       if instanceType ~= "arena" and wowex.wowexStorage.read("thistletea") then
         if UnitIsPlayer("target") and UnitPower("player") <= 30 and debuff(KidneyShot,"target") then
           Eval('RunMacroText("/use Thistle Tea")', 'player')
@@ -706,8 +706,8 @@ Routine:RegisterRoutine(function()
 --[[
       if not debuff(11201,"target") and not buff(34471, "target") and not buff(31224, "target") and not buff(20594, "target") and not debuff(CheapShot, "target") and not debuff(KidneyShot, "target") and moving("target") and (debuff(26864, "target") or targetclass == "Rogue" or targetclass == "Warrior" or targetclass == "Shaman")  then
         EquipItemByName(28189, 17)
-      elseif debuff(11201,"target") and not debuff(11398,"target") and (targetclass == "Priest" or targetclass == "Mage") then
-        EquipItemByName(31331, 17)
+      --elseif debuff(11201,"target") and not debuff(11398,"target") and (targetclass == "Priest" or targetclass == "Mage") then
+      --  EquipItemByName(31331, 17)
       elseif (debuff(11201,"target") or debuff(11398,"target")) then
         EquipItemByName(28310, 17)
       end
@@ -801,28 +801,21 @@ Routine:RegisterRoutine(function()
   end
   ]]
 
-  local function Opener()
+ local function Opener()
     if UnitCanAttack("player","target") and distance("player","target") <= 5 then
       if buff(Stealth,"player") or buff(26888,"player") then
         if not IsBehind("target") then
-          if targetclass == "Mage" and blinkcd ~= nil then
-            if castable(CheapShot) and (GetTime() <= blinkcd) and not buff(34471,"target") then
-              cast(Premeditation, "target")
-              cast(CheapShot,"target")
-            end
-          elseif targetclass ~= "Mage" then
-            if castable(CheapShot) and not buff(34471,"target") then
-              cast(Premeditation, "target")
-              cast(CheapShot,"target")  
-            end
+          if wowex.wowexStorage.read("openerfrontal") == "Cheap Shot" and castable(CheapShot) and targetclass ~= "Mage" --[[or (GetTime() <= blinkcd)]] and not buff(34471,"target") then
+            cast(Premeditation, "target")
+            cast(CheapShot,"target")
           end
         end
         if IsBehind("target") then
-          if --[[wowex.wowexStorage.read("openerbehind") == "Garrote" and]] castable(Garrote) and (targetclass == "Mage" or targetclass == "Priest" or targetclass == "Shaman" or targetclass == "Warlock" or targetclass == "Druid") and (targetclass ~= "Hunter" or buff(34471,"target")) and not debuff(18469, "target") and UnitPowerType("target") ~= 0 and GetUnitSpeed("target") <= 10 and not --[[DRUID FORMS]] (buff(9634,"target") or buff(768,"target") or buff(5487,"target") or buff(783,"target")) then
+          if wowex.wowexStorage.read("openerbehind") == "Garrote" and castable(Garrote) and (targetclass == "Mage" or targetclass == "Priest" or targetclass == "Shaman" or targetclass == "Warlock" or targetclass == "Druid") and (targetclass ~= "Hunter" or buff(34471,"target")) and not debuff(18469, "target") and GetUnitSpeed("target") <= 10 then
             cast(Premeditation, "target")
             cast(Garrote,"target")
           end
-          if --[[wowex.wowexStorage.read("openerbehind") == "Garrote" and]] castable(CheapShot) and not buff(34471,"target") then
+          if wowex.wowexStorage.read("openerbehind") == "Garrote" and castable(CheapShot) and not buff(34471,"target") then
             cast(Premeditation, "target")
             cast(CheapShot,"target")
           end
@@ -913,7 +906,7 @@ Routine:RegisterRoutine(function()
         cast(26679, "target")
         Debug("Deadly Throw to Interrupt on " .. UnitName("target"), 26679)
       end
-      if castable(KidneyShot, "target") and GetComboPoints >= 4 and not debuff(KidneyShot, "target") and not debuff(1833, "target") and not debuff(1330, "target") and not debuff(18469, "target") and not buff(34471, "target") and kidneychain <= 0.4 and not isElite("target") then
+      if castable(KidneyShot, "target") and GetComboPoints >= 4 and not debuff(KidneyShot, "target") and not debuff(1833, "target") and not debuff(1330, "target") and not debuff(18469, "target") and not buff(34471, "target") and not buff(1953,"target") and kidneychain <= 0.4 and not isElite("target") then
         cast(KidneyShot, "target")
         Debug("BIG Kidney on " .. UnitName("target"), 8643)
       end
@@ -983,12 +976,12 @@ Routine:RegisterRoutine(function()
       if castable(GhostlyStrike, "target") and not buff(GhostlyStrike,"player") and health() <= 90 and GetComboPoints < 5 and UnitTargetingUnit("target", "player") and UnitPowerType("target") ~= 0 then
         cast(GhostlyStrike, "target")
       end
-      if castable(Hemorrhage, "target") and (UnitPower("player") >= 70 or health("target") <= 40 or debuff(KidneyShot, "target") or health() <= 20) then
+      if castable(Hemorrhage, "target") and (UnitPower("player") >= 60 or health("target") <= 60 or debuff(KidneyShot, "target") or health("player") <= 20) then
         cast(Hemorrhage,"target")
       end
     end
   end
---[[
+
   local function healthstone()
     local healthstonelist = {22103, 22104, 22105}
     if health() <= 40 and UnitAffectingCombat("player") then
@@ -1001,7 +994,7 @@ Routine:RegisterRoutine(function()
       end
     end
   end
-]]
+
   function checkweaponenchants(hand)
     if not hand then return end
     local mainhandbuff, _, _, _, offhandbuff, _, _, _ = GetWeaponEnchantInfo()
@@ -1127,8 +1120,7 @@ Routine:RegisterRoutine(function()
         cast(Sap,sapobject)
         if debuff(Sap,"target") then
           TargetLastTarget()
-        elseif distance("player",object) >= 15 then
-          TargetLastTarget()
+          break
         end
       break
       end
@@ -1217,7 +1209,7 @@ Routine:RegisterRoutine(function()
     if Hide() then return true end
     --if Distract() then return true end
     if Poison() then return true end
-    --if healthstone() then return true end
+    if healthstone() then return true end
     if Dismounter() then return true end
   end
   --if wowex.wowexStorage.read('autoloot') and not UnitAffectingCombat("player") and (not buff(Stealth,"player") or not buff(Vanish,"player")) and InventorySlots() > 2 then
