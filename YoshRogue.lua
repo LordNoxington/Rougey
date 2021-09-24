@@ -607,7 +607,7 @@ Routine:RegisterRoutine(function()
 
     if subevent == "SPELL_CAST_START" then
       local spellId, spellName, _, _, _, _, _, _, _, _, _, _, _ = select(12, ...)
-      if spellName == "Fear" or spellName == "Polymorph" or spellName == "Regrowth" or spellName == "Cyclone" or spellName == "Greater Heal" or spellName == "Flash Heal" or spellname == "Healing Wave" then
+      if spellName == "Fear" or spellName == "Polymorph" or spellName == "Regrowth" or spellName == "Cyclone" or spellName == "Greater Heal" or spellName == "Flash Heal" or spellname == "Healing Wave" or spellname == "Binding Heal" or spellName == "Mana Burn" or spellName == "Drain Mana" then
         if health("target") <= 90 and not buff(Stealth,"player") then
           --for i, object in ipairs(Objects()) do
           for object in OM:Objects(OM.Types.Player) do
@@ -1220,10 +1220,10 @@ Routine:RegisterRoutine(function()
     --if healthstone() then return true end
     if Dismounter() then return true end
   end
-  if wowex.wowexStorage.read('autoloot') and not UnitAffectingCombat("player") and (not buff(Stealth,"player") or not buff(Vanish,"player")) and InventorySlots() > 2 then
-    Loot()
-    return true 
-  end
+  --if wowex.wowexStorage.read('autoloot') and not UnitAffectingCombat("player") and (not buff(Stealth,"player") or not buff(Vanish,"player")) and InventorySlots() > 2 then
+  --  Loot()
+  --  return true 
+  --end
 end, Routine.Classes.Rogue, Routine.Specs.Rogue)
 Routine:LoadRoutine(Routine.Specs.Rogue)
 print("\124cffff80ff\124Tinterface\\ChatFrame\\UI-ChatIcon-Blizz:12:20:0:0:32:16:4:28:0:16\124t [Yosh] whispers: Hello, " .. UnitName("player") .. " Welcome to my routine :)")
