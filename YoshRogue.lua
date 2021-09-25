@@ -369,7 +369,9 @@ Routine:RegisterRoutine(function()
   if UnitIsDeadOrGhost("player") or debuffduration(1020,"target") > 0.2 or debuffduration(Gouge,"target") > 0.2 or debuffduration(Sap,"target") > 0.2 or debuff(Cyclone,"target") or debuffduration(Blind,"target") > 0.2 or debuff(12826,"target") or buff(45438, "target") or buff(642,"target") or buff(1022,"target") or debuff(33786,"target") then 
     if IsPlayerAttacking("target") then
       Eval('RunMacroText("/stopattack")', 'player')
-    else return end 
+    elseif not IsPlayerAttacking("target") and castable(Stealth,"player") and not IsPoisoned("player") then
+      cast(Stealth,"player")
+    else return end
   end
   
   local function InventorySlots()
@@ -573,9 +575,9 @@ Routine:RegisterRoutine(function()
       local spellId, spellName, _, _, _, _, _, _, _, _, _, _, _ = select(12, ...)
       local myname = UnitName("player")
       if spellName == "Vanish" and (sourceName ~= myname) then
-        if UnitCanAttack("player","target") and castable(Vanish) then
+        if instanceType == "arena" and castable(Vanish) then
           cast(Vanish)
-          Debug("Vanishing to avoid Rogue opener",1856)
+          Debug("Vanshing to avoid Rogue opener",1856)
         end
       end
       if destName == myname and spellName == "Death Coil" then
@@ -596,19 +598,56 @@ Routine:RegisterRoutine(function()
           Debug("Cloaking Pyroblast!! ",33938)
         end
       end
+      --Add Wyvern sting
+      if destName == myname and spellName == "Wyvern Sting" then
+        if castable(Vanish) then
+          cast(Vanish)
+          Debug("Vanishing Wyvern!! ",19386)
+        end
+      end
       if spellName == "Blink" then
-        local blinktime = GetTime()
-        blinkcd = blinktime + 15
+        for object in OM:Objects(OM.Types.Player) do
+          if sourceName == ObjectName(object) then
+            if UnitCanAttack("player",object) then
+              local blinktime = GetTime()
+              blinkcd = blinktime + 15
+            end
+          end
+        end
       end
       if spellName == "Feign Death" then
-        TargetUnit(sourceName)
+        for object in OM:Objects(OM.Types.Player) do
+          if sourceName == ObjectName(object) then
+            if distance("player",object) <= 15 and UnitCanAttack("player",object) then
+              TargetUnit(object)
+            end
+          end
+        end
+      end
+      if spellName == "Vanish" and (sourceName ~= myname) and instanceType ~= "arena" then
+        for object in OM:Objects(OM.Types.Player) do
+          if sourceName == ObjectName(object) then
+            if distance("player",object) <= 15 and UnitCanAttack("player",object) and UnitTargetingUnit(object,"player") then
+              Eval('RunMacroText("/use Free Action Potion")', 'player')
+            end
+          end
+        end
+      end
+      if spellName == "Summon Water Elemental" and instanceType ~= "arena" then
+        for object in OM:Objects(OM.Types.Player) do
+          if sourceName == ObjectName(object) then
+            if UnitTargetingUnit(object,"player") then
+              Eval('RunMacroText("/use Free Action Potion")', 'player')
+            end
+          end
+        end
       end
     end
 
     if subevent == "SPELL_CAST_START" then
       local spellId, spellName, _, _, _, _, _, _, _, _, _, _, _ = select(12, ...)
-      if spellName == "Fear" or spellName == "Polymorph" or spellName == "Regrowth" or spellName == "Cyclone" or spellName == "Greater Heal" or spellName == "Flash Heal" or spellname == "Healing Wave" or spellname == "Binding Heal" or spellName == "Mana Burn" or spellName == "Drain Mana" then
-        if health("target") <= 90 and not buff(Stealth,"player") then
+      if spellName == "Fear" or spellName == "Polymorph" or spellName == "Regrowth" or spellName == "Cyclone" or spellName == "Greater Heal" or spellName == "Flash Heal" or spellname == "Healing Wave" or spellname == "Binding Heal" or spellName == "Mana Burn" or spellName == "Drain Mana" or spellName == "Holy Light" then
+        if health("target") <= 95 and not buff(Stealth,"player") then
           --for i, object in ipairs(Objects()) do
           for object in OM:Objects(OM.Types.Player) do
             if sourceName == ObjectName(object) then
@@ -627,7 +666,9 @@ Routine:RegisterRoutine(function()
           end
         end
       end
-      --Add if Entangling roots being casted at player = FAP
+      if spellName == "Entangling Roots" and destName == myname and instanceType ~= "arena" then
+        Eval('RunMacroText("/use Free Action Potion")', 'player')
+      end
     end
 
     if subevent == "SPELL_INTERRUPT" then
@@ -705,12 +746,13 @@ Routine:RegisterRoutine(function()
         kickNameplate(Kick, true)
       end
 --[[
-      if not debuff(11201,"target") and not buff(34471, "target") and not buff(31224, "target") and not buff(20594, "target") and not debuff(CheapShot, "target") and not debuff(KidneyShot, "target") and moving("target") and (debuff(26864, "target") or targetclass == "Rogue" or targetclass == "Warrior" or targetclass == "Shaman")  then
-        EquipItemByName(28189, 17)
+      --if not debuff(11201,"target") and not buff(34471, "target") and not buff(31224, "target") and not buff(20594, "target") and not debuff(CheapShot, "target") and not debuff(KidneyShot, "target") and (debuff(26864, "target") or targetclass == "Rogue" or targetclass == "Warrior" or targetclass == "Shaman")  then
+      --  EquipItemByName(28189, 17)
       --elseif debuff(11201,"target") and not debuff(11398,"target") and (targetclass == "Priest" or targetclass == "Mage") then
       --  EquipItemByName(31331, 17)
-      elseif (debuff(11201,"target") or debuff(11398,"target")) then
+      if (debuff(11201,"target") or debuff(11398,"target")) then
         EquipItemByName(28310, 17)
+      else EquipItemByName(28189, 17)
       end
 ]]
       if castable(Preparation) and not castable(Vanish) and not castable(Evasion) then
@@ -859,7 +901,7 @@ Routine:RegisterRoutine(function()
         --      local debuffend = expirationTime - GetTime()
         --    if castable(Gouge, "target") and debuffend <= 0.2 then
               cast(Gouge, "target")
-              Debug("Gouge chain on " .. UnitName("target"), 38764)
+              Debug("Gouge to chain Cheap shot on " .. UnitName("target"), 38764)
         --    end 
         --  end 
        -- end
@@ -967,7 +1009,7 @@ Routine:RegisterRoutine(function()
       if buff(36554,"player") then
         kickNameplate(Kick, true)
       end
-      if castable(Shiv, "target") and not debuff(11201,"target") and not buff(34471, "target") and not buff(1044,"target") and not buff(31224, "target") and not buff(20594, "target") and not debuff(CheapShot, "target") and not debuff(KidneyShot, "target") and GetComboPoints < 5 and moving("target") and (debuff(26864, "target") or targetclass == "Rogue" or targetclass == "Warrior" or targetclass == "Mage") then
+      if castable(Shiv, "target") and not debuff(11201,"target") and not buff(5634,"target") and not buff(34471, "target") and not buff(31224, "target") and not buff(20594, "target") and not debuff(CheapShot, "target") and not debuff(KidneyShot, "target") and GetComboPoints < 5 and moving("target") and (debuff(26864, "target") or targetclass == "Rogue" or targetclass == "Warrior" or targetclass == "Mage") then
         cast(Shiv, "target")
         Debug("Shiv on " .. UnitName("target"),5938)
       --elseif castable(Shiv, "target") and not debuff(11398,"target") and debuff(11201,"target") and (targetclass == "Priest" or targetclass == "Mage") and not buff(34471, "target") and not buff(31224, "target") and not buff(20594, "target") and not debuff(CheapShot, "target") and not debuff(KidneyShot, "target") and GetComboPoints < 5 then
@@ -977,7 +1019,7 @@ Routine:RegisterRoutine(function()
       if castable(GhostlyStrike, "target") and not buff(GhostlyStrike,"player") and health() <= 90 and GetComboPoints < 5 and UnitTargetingUnit("target", "player") and UnitPowerType("target") ~= 0 then
         cast(GhostlyStrike, "target")
       end
-      if castable(Hemorrhage, "target") and (UnitPower("player") >= 60 or health("target") <= 60 or debuff(KidneyShot, "target") or health("player") <= 20) then
+      if castable(Hemorrhage, "target") and (UnitPower("player") >= 70 or health("target") <= 60 or debuff(KidneyShot, "target") or health("player") <= 20) then
         cast(Hemorrhage,"target")
       end
     end
@@ -1083,9 +1125,9 @@ Routine:RegisterRoutine(function()
   end
 
   local function pvp()
-    if (instanceType == "arena" or instanceType == "pvp") and castable(Stealth) and not mounted() and not IsPoisoned("player") and not isCasting("player") and not (buff(301089,"player") or buff(301091,"player")) then
+    if (instanceType == "arena" or instanceType == "pvp") and castable(Stealth) and not mounted() and not IsPoisoned("player") and not isCasting("player") and not (buff(301089,"player") or buff(301091,"player") or buff(34976,"player")) then
       cast(Stealth)
-      --EquipItemByName(28310, 17)
+      --EquipItemByName(28189, 17)
     end
 
     --for i, object in ipairs(Objects()) do
