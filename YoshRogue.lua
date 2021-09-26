@@ -627,7 +627,7 @@ Routine:RegisterRoutine(function()
       if spellName == "Vanish" and (sourceName ~= myname) and instanceType ~= "arena" then
         for object in OM:Objects(OM.Types.Player) do
           if sourceName == ObjectName(object) then
-            if distance("player",object) <= 15 and UnitCanAttack("player",object) and UnitTargetingUnit(object,"player") then
+            if distance("player",object) <= 15 and UnitCanAttack("player",object) and UnitTargetingUnit(object,"player") and not buff(6615,"player") and not buff(Stealth,"player") then
               Eval('RunMacroText("/use Free Action Potion")', 'player')
             end
           end
@@ -636,7 +636,7 @@ Routine:RegisterRoutine(function()
       if spellName == "Summon Water Elemental" and instanceType ~= "arena" then
         for object in OM:Objects(OM.Types.Player) do
           if sourceName == ObjectName(object) then
-            if UnitTargetingUnit(object,"player") then
+            if distance("player",object) <= 30 and UnitCanAttack("player",object) and UnitTargetingUnit(object,"player") and not buff(6615,"player") and not buff(Stealth,"player") then
               Eval('RunMacroText("/use Free Action Potion")', 'player')
             end
           end
