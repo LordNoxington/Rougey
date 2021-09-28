@@ -561,7 +561,7 @@ Routine:RegisterRoutine(function()
   end
 
   local function Dismounter()
-    if --[[UnitAffectingCombat("player") and UnitExists("target") and]] UnitIsPlayer(ObjectTargetingMe) and distance("player",ObjectTargetingMe) <= 45 then
+    if --[[UnitAffectingCombat("player") and UnitExists("target") and]] UnitIsPlayer(ObjectTargetingMe) and distance("player",ObjectTargetingMe) <= 45 and not (buff(301089,"target") or buff(301091,"target") or buff(34976,"target")) then
       Dismount()
     end
   end
@@ -1216,7 +1216,7 @@ Routine:RegisterRoutine(function()
   ]]
   
   local function Hide()
-    if (not buff(Stealth,"player") --[[or buff(Vanish,"player")]]) and not UnitAffectingCombat("player") and UnitCanAttack("player","target") and not melee() and not IsPoisoned("player") then
+    if (not buff(Stealth,"player") --[[or buff(Vanish,"player")]]) and not UnitAffectingCombat("player") and UnitCanAttack("player","target") and not melee() and not IsPoisoned("player") and not (buff(301089,"target") or buff(301091,"target") or buff(34976,"target")) then
       if UnitExists("target") and distance("player","target") <= 35 then
         Dismount()
         cast(Stealth)
