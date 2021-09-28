@@ -1017,10 +1017,10 @@ Routine:RegisterRoutine(function()
       --  cast(Shiv, "target")
       --  Debug("Shiv for Mind Numbing on " .. UnitName("target"),5938) 
       end     
-      if castable(GhostlyStrike, "target") and not buff(GhostlyStrike,"player") and health() <= 90 and GetComboPoints < 5 and UnitTargetingUnit("target", "player") and UnitPowerType("target") ~= 0 then
+      if castable(GhostlyStrike, "target") and not buff(GhostlyStrike,"player") and health() <= 90 and GetComboPoints < 5 and UnitTargetingUnit("target", "player") and UnitPowerType("target") ~= 0 and not debuff(CheapShot,"target") then
         cast(GhostlyStrike, "target")
       end
-      if castable(Hemorrhage, "target") and (UnitPower("player") >= 70 or health("target") <= 80 or debuff(KidneyShot, "target") or health("player") <= 20) then
+      if castable(Hemorrhage, "target") and (UnitPower("player") >= 70 or health("target") <= 70 or debuff(KidneyShot, "target") or health("player") <= 20) then
         cast(Hemorrhage,"target")
       end
     end
