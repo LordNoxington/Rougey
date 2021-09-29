@@ -366,7 +366,7 @@ Routine:RegisterRoutine(function()
   --local _, _, _, _, _, _, itemType5 = GetItemInfo(mainHandLink)
   --if gcd() > latency() then return end
   if wowex.keystate() then return end
-  if UnitIsDeadOrGhost("player") or debuffduration(1020,"target") > 0.2 or debuffduration(Gouge,"target") > 0.2 or debuffduration(Sap,"target") > 0.2 or debuff(Cyclone,"target") or debuffduration(Blind,"target") > 0.2 or debuff(12826,"target") or buff(45438, "target") or buff(642,"target") or buff(1022,"target") or debuff(33786,"target") then 
+  if UnitIsDeadOrGhost("player") or buff(1020,"target") or debuffduration(Gouge,"target") > 0.2 or debuffduration(Sap,"target") > 0.2 or debuffduration(Blind,"target") > 0.2 or debuff(12826,"target") or buff(45438, "target") or buff(642,"target") or buff(1022,"target") or debuff(33786,"target") then 
     if IsPlayerAttacking("target") then
       Eval('RunMacroText("/stopattack")', 'player')
     elseif not IsPlayerAttacking("target") and castable(Stealth,"player") then
@@ -1010,7 +1010,7 @@ Routine:RegisterRoutine(function()
       if buff(36554,"player") and (isCasting("target") or isChanneling("target")) then
         kickNameplate(Kick, true)
       end
-      if castable(Shiv, "target") and not debuff(11201,"target") and not buff(6615,"target") and not buff(34471, "target") and not buff(31224, "target") and not buff(20594, "target") and not debuff(27072,"target") and not debuff(116,"target") and not debuff(27087,"target") and not debuff(12486,"target") and not debuff(CheapShot, "target") and not debuff(KidneyShot, "target") and GetComboPoints < 5 and moving("target") and (debuff(26864, "target") or targetclass == "Rogue" or targetclass == "Warrior" or targetclass == "Mage") then
+      if castable(Shiv, "target") and not buff(1044,"target") and not debuff(11201,"target") and not buff(6615,"target") and not buff(34471, "target") and not buff(31224, "target") and not buff(20594, "target") and not debuff(27072,"target") and not debuff(116,"target") and not debuff(27087,"target") and not debuff(12486,"target") and not debuff(CheapShot, "target") and not debuff(KidneyShot, "target") and GetComboPoints < 5 and moving("target") and (debuff(26864, "target") or targetclass == "Rogue" or targetclass == "Warrior" or targetclass == "Mage") then
         cast(Shiv, "target")
         Debug("Shiv on " .. UnitName("target"),5938)
       --elseif castable(Shiv, "target") and not debuff(11398,"target") and debuff(11201,"target") and (targetclass == "Priest" or targetclass == "Mage") and not buff(34471, "target") and not buff(31224, "target") and not buff(20594, "target") and not debuff(CheapShot, "target") and not debuff(KidneyShot, "target") and GetComboPoints < 5 then
