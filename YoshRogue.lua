@@ -32,6 +32,7 @@ local E = Tinkr:require('Routine.Modules.Exports')
 local lastdebugmsg = ""
 local lastdebugtime = 0
 local poisondelay = 0
+_G.RogueSpellQueue = {}
 Tinkr:require('scripts.cromulon.libs.Libdraw.Libs.LibStub.LibStub', wowex) --! If you are loading from disk your rotaiton. 
 Tinkr:require('scripts.cromulon.libs.Libdraw.LibDraw', wowex) 
 Tinkr:require('scripts.cromulon.libs.AceGUI30.AceGUI30', wowex)
@@ -160,6 +161,7 @@ Draw:Sync(function(draw)
     local fx, fy, fz = RotateVector(tx, ty, tz, (targetrotation+math.pi), 2)
     local xx, xy, xz = RotateVector(tx, ty, tz, (targetrotation+math.pi/2), 1)
     local vx, vy, vz = RotateVector(tx, ty, tz, (targetrotation-math.pi/2), 1)
+    draw:SetColor(draw.colors.blue)
     draw:Line(tx, ty, tz, xx, xy, xz)
     draw:Line(tx, ty, tz, vx, vy, vz)
     draw:SetColor(draw.colors.yellow)
@@ -358,6 +360,10 @@ else
   end)
 end
 
+_G.QueueRogueCast = function(_spell, _target)
+  table.insert(_G.RogueSpellQueue, {spell=_spell, target=_target})
+end
+
 Routine:RegisterRoutine(function()
   local GetComboPoints = GetComboPoints("player","target")
   local inInstance, instanceType = IsInInstance()
@@ -365,7 +371,7 @@ Routine:RegisterRoutine(function()
   --local mainHandLink = GetInventoryItemLink("player", GetInventorySlotInfo("MainHandSlot"))
   --local _, _, _, _, _, _, itemType5 = GetItemInfo(mainHandLink)
   --if gcd() > latency() then return end
-  if wowex.keystate() then return end
+  --if wowex.keystate() then return end
   if UnitIsDeadOrGhost("player") or buff(1020,"target") or debuffduration(Gouge,"target") > 0.2 or debuffduration(Sap,"target") > 0.2 or debuffduration(Blind,"target") > 0.2 or debuff(12826,"target") or buff(45438, "target") or buff(642,"target") or buff(1022,"target") or debuff(33786,"target") then 
     if IsPlayerAttacking("target") then
       Eval('RunMacroText("/stopattack")', 'player')
@@ -503,6 +509,19 @@ Routine:RegisterRoutine(function()
       end
     end
   end
+
+  local function Queue()
+    if #_G.RogueSpellQueue > 0 then
+      local current_spell = _G.RogueSpellQueue[1]
+      table.remove(_G.RogueSpellQueue, 1)
+      if UnitExists(current_spell.target) and not UnitIsDeadOrGhost(current_spell.target) and distancecheck(current_spell.target, current_spell.spell) then
+        cast(current_spell.spell, current_spell.target)
+        print("doing manual override spells")
+      else
+        print("manual cast was on invalid target. skipped")
+      end
+    end
+  end
   
   local function Defensives()
     if UnitAffectingCombat("player") and not mounted() and not buff(Stealth,"player") then
@@ -574,6 +593,17 @@ Routine:RegisterRoutine(function()
     if subevent == "SPELL_CAST_SUCCESS" then
       local spellId, spellName, _, _, _, _, _, _, _, _, _, _, _ = select(12, ...)
       local myname = UnitName("player")
+      if spellName == "Feign Death" then
+        for hunter in OM:Objects(OM.Types.Player) do
+          if sourceName == ObjectName(hunter) then
+            if distance("player",hunter) <= 10 and UnitCanAttack("player",hunter) then
+              FaceObject(hunter)
+              TargetUnit(hunter)
+              cast(Hemorrhage,hunter)
+            end
+          end
+        end
+      end
       if spellName == "Vanish" and (sourceName ~= myname) then
         if instanceType == "arena" and castable(Vanish) and not castable(Stealth,"player") and not buff(Stealth,"player") then
           cast(Vanish)
@@ -611,15 +641,6 @@ Routine:RegisterRoutine(function()
             if UnitCanAttack("player",object) then
               local blinktime = GetTime()
               blinkcd = blinktime + 15
-            end
-          end
-        end
-      end
-      if spellName == "Feign Death" then
-        for object in OM:Objects(OM.Types.Player) do
-          if sourceName == ObjectName(object) then
-            if distance("player",object) <= 10 and UnitCanAttack("player",object) then
-              TargetUnit(object)
             end
           end
         end
@@ -855,7 +876,7 @@ Routine:RegisterRoutine(function()
           end
         end
         if IsBehind("target") then
-          if wowex.wowexStorage.read("openerbehind") == "Garrote" and castable(Garrote) and (targetclass == "Mage" or targetclass == "Priest" or targetclass == "Shaman" or targetclass == "Warlock" or targetclass == "Druid") and (targetclass ~= "Hunter" or buff(34471,"target")) and not debuff(18469, "target") and GetUnitSpeed("target") <= 10 then
+          if wowex.wowexStorage.read("openerbehind") == "Garrote" and castable(Garrote) and (targetclass == "Mage" or targetclass == "Priest" or targetclass == "Shaman" or targetclass == "Warlock" or targetclass == "Druid") and (targetclass ~= "Hunter" or buff(34471,"target")) and not debuff(18469, "target") and GetUnitSpeed("target") <= 8 and not debuff(26884,"target") then
             cast(Premeditation, "target")
             cast(Garrote,"target")
           end
@@ -958,16 +979,16 @@ Routine:RegisterRoutine(function()
         cast(Rupture, "target")
         Debug("Rupture early on " .. UnitName("target"), 38764)
       end
-      if castable(SliceAndDice,"target") and GetComboPoints <= 4 and GetComboPoints >= 1 and not buff(SliceAndDice, "player") and not debuff(CheapShot, "target") and not debuff(1330, "target") and health("target") >= 20 then
+      if castable(SliceAndDice,"target") and GetComboPoints <= 4 and GetComboPoints >= 1 and not buff(SliceAndDice, "player") and not debuff(CheapShot, "target") and not debuff(1330, "target") and health("target") >= 20 and cooldown(KidneyShot) > 5 then
         cast(SliceAndDice,"target")
       end
-      if castable(Rupture, "target") and GetComboPoints >= 3 and UnitPowerType("target") ~= 0 and not debuff(CheapShot, "target") and not debuff(KidneyShot, "target") and health("target") >= 40 then
+      if castable(Rupture, "target") and GetComboPoints >= 3 and UnitPowerType("target") ~= 0 and not debuff(CheapShot, "target") and not debuff(KidneyShot, "target") and health("target") >= 40 and cooldown(KidneyShot) > 5 then
          cast(Rupture, "target")
       end
       --if castable(SliceAndDice, 'target') and GetComboPoints >= 2 and buffduration(SliceAndDice, 'player') <= 1 then
       --  return cast(SliceAndDice, 'target')
       --end
-      if castable(Eviscerate, "target") and GetComboPoints >= 4 and not castable(KidneyShot, "target") and cooldown(KidneyShot) > 2 then
+      if castable(Eviscerate, "target") and GetComboPoints >= 4 and not castable(KidneyShot, "target") and cooldown(KidneyShot) > 5 then
         cast(Eviscerate, "target")
       end
       if castable(26679, "target") and GetComboPoints >= 3 and distance("player","target") >= 10 and UnitHealth("target") <= 7 and not castable(Shadowstep, "target") then
@@ -1020,7 +1041,9 @@ Routine:RegisterRoutine(function()
       if castable(GhostlyStrike, "target") and not buff(GhostlyStrike,"player") and health() <= 90 and GetComboPoints < 5 and UnitTargetingUnit("target", "player") and UnitPowerType("target") ~= 0 and not debuff(CheapShot,"target") then
         cast(GhostlyStrike, "target")
       end
-      if castable(Hemorrhage, "target") and (UnitPower("player") >= 70 or health("target") <= 70 or debuff(KidneyShot, "target") or health("player") <= 20) then
+      if castable(Hemorrhage, "target") and (debuffduration(CheapShot,"target") > 2 or IsBehind("target")) and GetComboPoints < 5 then
+        cast(Hemorrhage,"target")
+      elseif castable(Hemorrhage,"target") and (UnitPower("player") >= 70 or health("target") <= 70 or debuff(KidneyShot, "target") or health("player") <= 20) and not debuff(CheapShot,"target") and (GetComboPoints < 5 or UnitPower("player") >= 90) then
         cast(Hemorrhage,"target")
       end
     end
@@ -1220,7 +1243,7 @@ Routine:RegisterRoutine(function()
       if UnitExists("target") and distance("player","target") <= 35 then
         Dismount()
         cast(Stealth)
-        cast(Premeditation,"target")
+        --cast(Premeditation,"target")
       end
       --if wowex.wowexStorage.read("stealthmode") == "DynOM" then
       --  for i, object in ipairs(Objects()) do
@@ -1244,6 +1267,7 @@ Routine:RegisterRoutine(function()
     if Interrupt() then return true end
     if f:COMBAT_LOG_EVENT_UNFILTERED() then return true end
     if t:UNIT_SPELLCAST_SUCCEEDED() then return true end
+    if Queue() then return true end
     if Cooldowns() then return true end
     if Execute() then return true end
     if pvp() then return true end
