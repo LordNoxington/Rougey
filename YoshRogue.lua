@@ -593,17 +593,6 @@ Routine:RegisterRoutine(function()
     if subevent == "SPELL_CAST_SUCCESS" then
       local spellId, spellName, _, _, _, _, _, _, _, _, _, _, _ = select(12, ...)
       local myname = UnitName("player")
-      if spellName == "Feign Death" then
-        for hunter in OM:Objects(OM.Types.Player) do
-          if sourceName == ObjectName(hunter) then
-            if distance("player",hunter) <= 10 and UnitCanAttack("player",hunter) then
-              FaceObject(hunter)
-              TargetUnit(hunter)
-              cast(Hemorrhage,hunter)
-            end
-          end
-        end
-      end
       if spellName == "Vanish" and (sourceName ~= myname) then
         if instanceType == "arena" and castable(Vanish) and not castable(Stealth,"player") and not buff(Stealth,"player") then
           cast(Vanish)
@@ -1152,6 +1141,20 @@ Routine:RegisterRoutine(function()
     if (instanceType == "arena" or instanceType == "pvp") and castable(Stealth) and not mounted() and not IsPoisoned("player") and not isCasting("player") and not (buff(301089,"player") or buff(301091,"player") or buff(34976,"player")) then
       cast(Stealth)
       --EquipItemByName(28189, 17)
+    end
+
+    for hunter in OM:Objects(OM.Types.Player) do
+      if UnitClass(hunter) == "Hunter" then
+        if distance("player",hunter) <= 10 then
+          if UnitCanAttack("player",hunter) then
+            if buff(5384,hunter) then
+              FaceObject(hunter)
+              TargetUnit(hunter)
+              Debug("Re-targeting Huntard",5384)
+            end
+          end
+        end
+      end
     end
 
     --for i, object in ipairs(Objects()) do
