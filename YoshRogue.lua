@@ -360,6 +360,10 @@ else
   end)
 end
 
+_G.QueueRogueCast = function(_spell, _target)
+  table.insert(_G.RogueSpellQueue, {spell=_spell, target=_target})
+end
+
 Routine:RegisterRoutine(function()
   local GetComboPoints = GetComboPoints("player","target")
   local inInstance, instanceType = IsInInstance()
@@ -383,10 +387,6 @@ Routine:RegisterRoutine(function()
       cast(Stealth,"player")
     end
     return end
-
-  _G.QueueRogueCast = function(_spell, _target)
-    table.insert(_G.RogueSpellQueue, {spell=_spell, target=_target})
-  end
 
   local function InventorySlots()
     local slotsfree = 0
@@ -559,16 +559,15 @@ Routine:RegisterRoutine(function()
             TargetUnit(totemobject)
             FaceObject(totemobject)
             Eval('StartAttack()', 't')
-            --cast(Attack, totemobject)
           end
           if not UnitExists("target") then
             TargetLastTarget()
           end
         end
       end
-      --if castable(Evasion) and health() <= 95 and UnitTargetingUnit("target","player") and (defclass == "Warrior" or defclass == "Rogue") then
-      --  cast(Evasion,"player")
-      --end
+      if castable(Evasion) and health() <= 95 and UnitTargetingUnit("target","player") and (targetclass == "Warrior" or targetclass == "Rogue") then
+        cast(Evasion,"player")
+      end
       --[[
       for i, object in ipairs(Objects()) do
         if UnitCanAttack("player",object) and UnitTargetingUnit(object,'player') then
@@ -585,7 +584,7 @@ Routine:RegisterRoutine(function()
   end
 
   local function Dismounter()
-    if --[[UnitAffectingCombat("player") and UnitExists("target") and]] UnitIsPlayer(ObjectTargetingMe) and distance("player",ObjectTargetingMe) <= 45 and not (buff(301089,"target") or buff(301091,"target") or buff(34976,"target")) then
+    if UnitIsPlayer(ObjectTargetingMe) and distance("player",ObjectTargetingMe) <= 45 and not (buff(301089,"target") or buff(301091,"target") or buff(34976,"target")) then
       Dismount()
     end
   end
@@ -715,7 +714,7 @@ Routine:RegisterRoutine(function()
 
   local function Interrupt()
     if UnitAffectingCombat("player") and not buff(Stealth,"player") then
-      if buff(36554,"player") and (isCasting("target") or isChanneling("target")) then
+      if buff(36554,"player") then
         kickNameplate(Kick, true)
       end
       if not UnitIsPlayer("target") then
@@ -760,9 +759,6 @@ Routine:RegisterRoutine(function()
 
   local function Cooldowns()
     if UnitExists("target") and UnitCanAttack("player","target") and UnitAffectingCombat("player") and not buff(Stealth,"player") and not mounted() then
-      if buff(36554,"player") and (isCasting("target") or isChanneling("target")) then
-        kickNameplate(Kick, true)
-      end
 
       --if not debuff(11201,"target") and not buff(34471, "target") and not buff(31224, "target") and not buff(20594, "target") and not debuff(CheapShot, "target") and not debuff(KidneyShot, "target") and (debuff(26864, "target") or targetclass == "Rogue" or targetclass == "Warrior" or targetclass == "Shaman")  then
       --  EquipItemByName(28189, 17)
@@ -890,9 +886,6 @@ Routine:RegisterRoutine(function()
 
   local function Dps()
     if UnitAffectingCombat("player") and UnitExists("target") and UnitCanAttack("player","target") and not buff(Stealth,"player") then
-      if buff(36554,"player") and (isCasting("target") or isChanneling("target")) then
-        kickNameplate(Kick, true)
-      end 
 
       kidneychain = 0
       if kickDuration ~= nil then
@@ -1024,9 +1017,6 @@ Routine:RegisterRoutine(function()
 
   local function Filler()
     if not buff(Vanish,"player") and not buff(Stealth,"player") and UnitExists("target") and UnitCanAttack("player","target") then
-      if buff(36554,"player") and (isCasting("target") or isChanneling("target")) then
-        kickNameplate(Kick, true)
-      end
       if castable(Shiv, "target") and not buff(1044,"target") and not debuff(11201,"target") and not buff(6615,"target") and not buff(34471, "target") and not buff(31224, "target") and not buff(20594, "target") and not debuff(27072,"target") and not debuff(116,"target") and not debuff(27087,"target") and not debuff(12486,"target") and not debuff(CheapShot, "target") and not debuff(KidneyShot, "target") and GetComboPoints < 5 and moving("target") and (debuff(26864, "target") or targetclass == "Rogue" or targetclass == "Warrior" or targetclass == "Mage") then
         cast(Shiv, "target")
         Debug("Shiv on " .. UnitName("target"),5938)
