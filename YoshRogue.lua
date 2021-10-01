@@ -666,15 +666,17 @@ Routine:RegisterRoutine(function()
           --for i, object in ipairs(Objects()) do
             for object in OM:Objects(OM.Types.Player) do
               if sourceName == ObjectName(object) then
-                if UnitCanAttack("player",object) and not isProtected(object) then
+                if UnitCanAttack("player",object) then
                   if castable(Shadowstep,object) and cooldown(Kick) <= 0.1 and not buff(Stealth,"player") and distance("player",object) >= 5 and not UnitTargetingUnit("player",object) then
-                    TargetUnit(object)
-                    FaceObject(object)
-                    cast(Shadowstep,object)
-                    MoveForwardStop()
-                    StrafeLeftStop()
-                    StrafeRightStop()
-                    Debug("Shadowstep on " .. ObjectName(object),38768)
+                    if not isProtected(object) then
+                      TargetUnit(object)
+                      FaceObject(object)
+                      cast(Shadowstep,object)
+                      MoveForwardStop()
+                      StrafeLeftStop()
+                      StrafeRightStop()
+                      Debug("Shadowstep on " .. ObjectName(object),38768)
+                    end
                   end
                 end
               end
@@ -721,17 +723,17 @@ Routine:RegisterRoutine(function()
       end
       --for i, object in ipairs(Objects()) do
       for object in OM:Objects(OM.Types.Player) do
-        if UnitCanAttack("player",object) and not isProtected(object) then
+        if UnitCanAttack("player",object) then
           local kickclass, _, _ = UnitClass(object)
           if isCasting(object) and kickclass ~= "Hunter" then
             local _, _, _, _, endTime, _, _, _ = UnitCastingInfo(object);
             local finish = endTime/1000 - GetTime()
-            if finish <= 1 and castable(Kick,object) then
+            if finish <= 1 and castable(Kick,object) and not isProtected(object) then
               FaceObject(object)
               cast(Kick,object)
               Debug("Kicked " .. UnitName(object) .. " at " .. finish,38768)
             end
-            if finish <= 1 and castable(Gouge,object) and not IsBehind(object) and not castable(Kick,object) then
+            if finish <= 1 and castable(Gouge,object) and not IsBehind(object) and not castable(Kick,object) and not isProtected(object) then
               FaceObject(object)
               cast(Gouge,object)
               Debug("Gouged " .. UnitName(object) .. " at " .. finish,38764)
@@ -1181,12 +1183,14 @@ Routine:RegisterRoutine(function()
       end
     end
     for object in OM:Objects(OM.Types.Player) do
-      if UnitCanAttack("player",object) and not UnitIsDeadOrGhost(object) and UnitAffectingCombat("player") and not isProtected(object) then
+      if UnitCanAttack("player",object) and not UnitIsDeadOrGhost(object) and UnitAffectingCombat("player") then
         if castable(Vanish) and cansee("player",object) and UnitPower("player") >= 40 and not UnitAffectingCombat(object) and distance("player",object) <= 15 and GetUnitName("target") ~= ObjectName(object) and not debuff(Sap,object) and not debuff(CheapShot,"target") then
-          sapobject = Object(object)
-          TargetUnit(object)
-          cast(26889,"player")
-          Debug("Vanish to Sap " .. UnitName(object), 26889)
+          if not isProtected(object) then
+            sapobject = Object(object)
+            TargetUnit(object)
+            cast(26889,"player")
+            Debug("Vanish to Sap " .. UnitName(object), 26889)
+          end
         end   
       end
       while(buff(26888,"player") and castable(Sap,sapobject) and not UnitAffectingCombat(sapobject)) do
@@ -1422,6 +1426,7 @@ local mytable = {
         { key = "offhandpoison", width = 175, label = "Offhand", text = wowex.wowexStorage.read("offhandpoison"), type = "dropdown",
         options = {"Deadly", "MindNumbing","Crippling","None"} },
         { key = "thistletea",  type = "checkbox", text = "Use Thistle Tea?" , desc = "Will use on targets during Kidney Shot" },
+        { key = "fap",  type = "checkbox", text = "Use Free Action Potion?" , desc = "Uses FAPs at certain times" },
         { key = "heading", type = "heading", color = 'FFF468', text = "Stealth" },
         {type = "text", text = "DynOM = Scans the area around you for NPC aggro ranges and puts you into stealth when you get close to them.", color = 'FFF468'},
         {type = "text", text = "DynTarget = Stealthes you when you're near your TARGET's aggro range.", color = 'FFF468'},       
