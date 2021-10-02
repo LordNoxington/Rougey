@@ -1090,6 +1090,17 @@ Routine:RegisterRoutine(function()
       cast(Stealth)
       --EquipItemByName(28189, 17)
     end
+
+    if instanceType == "pvp" then
+      for flag in OM:Objects(OM.Types.GameObject) do
+        if ObjectID(flag) == 328418 or 328416 then
+          if distance("player",flag) <= 5 then
+            InteractUnit(flag)
+          end
+        end
+      end
+    end
+
 --[[
     for hunter in OM:Objects(OM.Types.Player) do
       if UnitClass(hunter) == "Hunter" then
