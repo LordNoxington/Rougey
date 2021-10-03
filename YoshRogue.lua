@@ -722,7 +722,7 @@ Routine:RegisterRoutine(function()
             FaceObject(oldTarget)
             TargetUnit(oldTarget)
           end
-        end 
+        end
       end
     end)
   end
@@ -834,17 +834,17 @@ Routine:RegisterRoutine(function()
     if UnitCanAttack("player","target") and distance("player","target") <= 5 then
       if buff(Stealth,"player") or buff(26888,"player") then
         if not IsBehind("target") then
-          if wowex.wowexStorage.read("openerfrontal") == "Cheap Shot" and castable(CheapShot) and targetclass ~= "Mage" --[[or (GetTime() <= blinkcd)]] and not buff(34471,"target") then
+          if castable(CheapShot) and targetclass ~= "Mage" --[[or (GetTime() <= blinkcd)]] and not buff(34471,"target") then
             cast(Premeditation, "target")
             cast(CheapShot,"target")
           end
         end
         if IsBehind("target") then
-          if wowex.wowexStorage.read("openerbehind") == "Garrote" and castable(Garrote) and (targetclass == "Mage" or targetclass == "Priest" or targetclass == "Shaman" or targetclass == "Warlock" or targetclass == "Druid") and (targetclass ~= "Hunter" or buff(34471,"target")) and not debuff(18469, "target") and GetUnitSpeed("target") <= 8 and not debuff(26884,"target") then
+          if castable(Garrote) and (targetclass == "Mage" or targetclass == "Priest" or targetclass == "Shaman" or targetclass == "Warlock" or targetclass == "Druid") and (targetclass ~= "Hunter" or buff(34471,"target")) and not debuff(18469, "target") and GetUnitSpeed("target") <= 8 and not debuff(26884,"target") then
             cast(Premeditation, "target")
             cast(Garrote,"target")
           end
-          if wowex.wowexStorage.read("openerbehind") == "Garrote" and castable(CheapShot) and not buff(34471,"target") then
+          if castable(CheapShot) and not buff(34471,"target") then
             cast(Premeditation, "target")
             cast(CheapShot,"target")
           end
@@ -867,7 +867,7 @@ Routine:RegisterRoutine(function()
         Eval('StartAttack()', 't')
       end
 
-      if castable(SliceAndDice) and myComboPoints <= 0 and not buff(SliceAndDice,"player") and distance("player","target") <= 10 and UnitPower("player") >= 40 --[[and not (isCasting("target") or isChanneling("target"))]] then
+      if castable(SliceAndDice) and myComboPoints <= 0 and not buff(SliceAndDice,"player") and distance("player","target") <= 10 and UnitPower("player") >= 40 and not (isCasting("target") or isChanneling("target")) then
         TargetLastTarget()
         if UnitExists("target") and GetComboPoints("player","target") >= 1 then
           cast(SliceAndDice)
@@ -1093,9 +1093,10 @@ Routine:RegisterRoutine(function()
 
     if instanceType == "pvp" then
       for flag in OM:Objects(OM.Types.GameObject) do
-        if ObjectID(flag) == 328418 or 328416 then
-          if distance("player",flag) <= 5 then
-            InteractUnit(flag)
+        if ObjectID(flag) == "328418" or ObjectID(flag) == "328416" then
+          local droppedFlag = Object(flag)
+          if distance("player",droppedFlag) <= 5 then
+            InteractUnit(droppedFlag)
           end
         end
       end
