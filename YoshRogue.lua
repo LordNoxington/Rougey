@@ -774,9 +774,10 @@ Routine:RegisterRoutine(function()
       --  EquipItemByName(28189, 17)
       --elseif debuff(11201,"target") and not debuff(11398,"target") and (targetclass == "Priest" or targetclass == "Mage") then
       --  EquipItemByName(31331, 17)
+
       --if (debuff(11201,"target") or debuff(11398,"target")) then
       --  EquipItemByName(28310, 17)
-      --else EquipItemByName(28189, 17)
+      --  else EquipItemByName(28189, 17)
       --end
 
       if castable(Preparation) and not castable(Vanish) and not castable(Evasion) then
@@ -903,10 +904,6 @@ Routine:RegisterRoutine(function()
         cast(Eviscerate, "target")
         Debug("Uncalculated Execute on " .. UnitName("target"), 26865)
       end
-      --if castable(KidneyShot, "target") and not castable(Kick,"target") and myComboPoints >= 1 and not debuff(1833, "target") and not debuff(1330, "target") and not debuff(18469, "target") and not buff(34471, "target") and isCasting("target") and UnitHealth("target") <= 15 then
-      --  cast(KidneyShot, "target")
-      --  Debug("Kidney to Interrupt on " .. UnitName("target"), 8643)
-      --end
       if castable(26679, "target") and distance("player","target") >= 15 and myComboPoints >= 1 and not castable(Shadowstep, "target") and (isCasting("target") or isChanneling("target")) then
         cast(26679, "target")
         Debug("Deadly Throw to Interrupt on " .. UnitName("target"), 26679)
@@ -975,7 +972,7 @@ Routine:RegisterRoutine(function()
       --  cast(Shiv, "target")
       --  Debug("Shiv for Mind Numbing on " .. UnitName("target"),5938) 
       end     
-      if castable(GhostlyStrike, "target") and not buff(GhostlyStrike,"player") and health() <= 90 and myComboPoints < 5 and UnitTargetingUnit("target", "player") and UnitPowerType("target") ~= 0 and not debuff(CheapShot,"target") then
+      if castable(GhostlyStrike, "target") and not buff(GhostlyStrike,"player") and health() <= 95 and myComboPoints < 5 and UnitTargetingUnit("target","player") and UnitPowerType("target") ~= 0 and not debuff(CheapShot,"target") then
         cast(GhostlyStrike, "target")
       end
       if castable(Hemorrhage, "target") and debuff(CheapShot,"target") and (debuffduration(CheapShot,"target") > 2 or IsBehind("target")) and myComboPoints < 5 then
@@ -1093,7 +1090,7 @@ Routine:RegisterRoutine(function()
 
     if instanceType == "pvp" then
       for flag in OM:Objects(OM.Types.GameObject) do
-        if ObjectID(flag) == "328418" or ObjectID(flag) == "328416" then
+        if ObjectID(flag) == 328418 or ObjectID(flag) == 328416 or ObjectID(flag) == 183511 or ObjectID(flag) == 183512 then
           local droppedFlag = Object(flag)
           if distance("player",droppedFlag) <= 5 then
             InteractUnit(droppedFlag)
@@ -1102,21 +1099,6 @@ Routine:RegisterRoutine(function()
       end
     end
 
---[[
-    for hunter in OM:Objects(OM.Types.Player) do
-      if UnitClass(hunter) == "Hunter" then
-        if distance("player",hunter) <= 10 then
-          if UnitCanAttack("player",hunter) then
-            if buff(5384,hunter) then
-              FaceObject(hunter)
-              TargetUnit(hunter)
-              Debug("Re-targeting Huntard",5384)
-            end
-          end
-        end
-      end
-    end
-]]
     --for i, object in ipairs(Objects()) do
     for object in OM:Objects(OM.Types.Player) do
       if UnitCanAttack("player",object) and not UnitIsDeadOrGhost(object) then
