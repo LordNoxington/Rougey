@@ -799,11 +799,13 @@ Routine:RegisterRoutine(function()
 
       if UnitExists("target") and health("target") <= 80 then
         for offtarget in OM:Objects(OM.Types.Player) do
-          if not UnitTargetingUnit("player",offtarget) and UnitTargetingUnit(offtarget,"target") then
-            if distance("player",offtarget) <= 5 then
-              local gougetarget = Object(offtarget)
-              cast(Gouge,gougetarget)
-              Debug("Gouging off-targat " .. UnitName(gougetarget), 11305)
+          if UnitCanAttack("player",offtarget) then
+            if not UnitTargetingUnit("player",offtarget) and UnitTargetingUnit(offtarget,"target") then
+              if distance("player",offtarget) <= 5 then
+                local gougetarget = Object(offtarget)
+                cast(Gouge,gougetarget)
+                Debug("Gouging off-targat " .. UnitName(gougetarget), 11305)
+              end
             end
           end
         end
@@ -1132,7 +1134,7 @@ Routine:RegisterRoutine(function()
 
     if instanceType == "pvp" then
       for flag in OM:Objects(OM.Types.GameObject) do
-        if ObjectID(flag) == 328418 or ObjectID(flag) == 328416 or ObjectID(flag) == 183511 or ObjectID(flag) == 183512 then
+        if ObjectID(flag) == 328418 or ObjectID(flag) == 328416 or ObjectID(flag) == 183511 or ObjectID(flag) == 183512 or ObjectID(flag) == 181621 or ObjectID(flag) == 367128 then
           if distance("player",flag) <= 5 then
             InteractUnit(flag)
           end
