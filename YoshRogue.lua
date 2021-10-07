@@ -1127,16 +1127,34 @@ Routine:RegisterRoutine(function()
   end
 
   local function pvp()
-    if (instanceType == "arena" or instanceType == "pvp") and castable(Stealth) and not mounted() and not IsPoisoned("player") and not isCasting("player") and not (buff(301089,"player") or buff(301091,"player") or buff(34976,"player")) then
+    if (instanceType == "arena" or instanceType == "pvp") and castable(Stealth) and not mounted() and not IsPoisoned("player") and not (isCasting("player") or isChanneling("player")) and not (buff(301089,"player") or buff(301091,"player") or buff(34976,"player")) then
       cast(Stealth)
       --EquipItemByName(28310, 17)
     end
 
     if instanceType == "pvp" then
       for flag in OM:Objects(OM.Types.GameObject) do
-        if ObjectID(flag) == 328418 or ObjectID(flag) == 328416 or ObjectID(flag) == 183511 or ObjectID(flag) == 183512 or ObjectID(flag) == 181621 or ObjectID(flag) == 367128 then
+        if ObjectID(flag) == 328418 or ObjectID(flag) == 328416 or ObjectID(flag) == 367128 then
           if distance("player",flag) <= 5 then
             InteractUnit(flag)
+          end
+        elseif ObjectID(flag) == 183511 then
+          if GetItemCount(22103) == 0 then
+            if distance("player",flag) <= 5 then
+              InteractUnit(flag)
+            end
+          end
+        elseif ObjectID(flag) == 183512 then
+          if GetItemCount(22104) == 0 then 
+            if distance("player",flag) <= 5 then
+              InteractUnit(flag)
+            end 
+          end
+        elseif ObjectID(flag) == 181621 then
+          if GetItemCount(22105) == 0 then 
+            if distance("player",flag) <= 5 then
+              InteractUnit(flag)
+            end
           end
         end
       end
