@@ -1132,14 +1132,14 @@ Routine:RegisterRoutine(function()
       --EquipItemByName(28310, 17)
     end
 
-    if instanceType == "pvp" then
+    if instanceType == "pvp" or instanceType == "arena" then
       for flag in OM:Objects(OM.Types.GameObject) do
         if ObjectID(flag) == 328418 or ObjectID(flag) == 328416 or ObjectID(flag) == 367128 then
           if distance("player",flag) <= 5 then
             InteractUnit(flag)
           end
         elseif ObjectID(flag) == 183511 then
-          if GetItemCount(22103) == 0 then
+          if GetItemCount(22105) == 0 then
             if distance("player",flag) <= 5 then
               InteractUnit(flag)
             end
@@ -1151,7 +1151,7 @@ Routine:RegisterRoutine(function()
             end 
           end
         elseif ObjectID(flag) == 181621 then
-          if GetItemCount(22105) == 0 then 
+          if GetItemCount(22103) == 0 then 
             if distance("player",flag) <= 5 then
               InteractUnit(flag)
             end
