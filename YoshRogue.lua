@@ -1134,7 +1134,7 @@ Routine:RegisterRoutine(function()
 
     if instanceType == "pvp" or instanceType == "arena" then
       for flag in OM:Objects(OM.Types.GameObject) do
-        if ObjectID(flag) == 328418 or ObjectID(flag) == 328416 or ObjectID(flag) == 367128 then
+        if ObjectID(flag) == 328418 or ObjectID(flag) == 328416 or ObjectID(flag) == 367128 or ObjectID(flag) == 181622 then
           if distance("player",flag) <= 5 then
             InteractUnit(flag)
           end
@@ -1156,7 +1156,7 @@ Routine:RegisterRoutine(function()
               InteractUnit(flag)
             end
           end
-        end
+        end        
       end
     end
 
