@@ -564,7 +564,7 @@ Routine:RegisterRoutine(function()
       end 
       for object in OM:Objects(OM.CreatureTypes) do
         local totemname = ObjectName(object)
-        if health("target") >= 20 then
+        if health("target") >= 20 and not (buff(Stealth,"player") or buff(Vanish,"player")) then
           if totemname == "Stoneskin Totem" or totemname == "Windfury Totem" or totemname == "Poison Cleansing Totem" or totemname == "Mana Tide Totem" or totemname == "Grounding Totem" or totemname == "Earthbind Totem" then
             if UnitCanAttack("player",object) and distance("player",object) <= 5 then
               CacheTarget()
@@ -749,6 +749,7 @@ Routine:RegisterRoutine(function()
           local kickclass, _, _ = UnitClass(object)
           if isCasting(object) and kickclass ~= "Hunter" then
             if castable(Kick,object) and not UnitTargetingUnit("player",object) and not isProtected(object) then
+              FaceObject(object)
               cast(Kick,object)
               Debug("Kicked off-target instantly ",38768)
             elseif UnitTargetingUnit("player",object) and not isProtected(object) then
@@ -889,7 +890,7 @@ Routine:RegisterRoutine(function()
         Eval('StartAttack()', 't')
       end
 
-      if castable(SliceAndDice) and myComboPoints <= 0 and not buff(SliceAndDice,"player") and distance("player","target") <= 10 and UnitPower("player") >= 40 and not (isCasting("target") or isChanneling("target")) then
+      if castable(SliceAndDice) and myComboPoints <= 0 and not buff(SliceAndDice,"player") and distance("player","target") <= 5 and UnitPower("player") >= 40 and not (isCasting("target") or isChanneling("target")) then
         TargetLastTarget()
         if UnitExists("target") and GetComboPoints("player","target") >= 1 then
           cast(SliceAndDice)
