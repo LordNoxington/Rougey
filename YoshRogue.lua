@@ -382,8 +382,8 @@ Routine:RegisterRoutine(function()
   --if gcd() > latency() then return end
   --if wowex.keystate() then return end
   --if UnitIsDeadOrGhost("player") or buff(1020,"target") or debuffduration(Gouge,"target") > 0.2 or debuffduration(Sap,"target") > 0.2 or debuffduration(Blind,"target") > 0.2 or debuff(12826,"target") or buff(45438,"target") or buff(642,"target") or buff(1022,"target") or debuff(33786,"target") then 
-  if UnitIsDeadOrGhost("player") or isProtected("target") then
-    if IsPlayerAttacking("target") then
+  if UnitIsDeadOrGhost("player") or isProtected("target") or debuff(676,"player") then
+    if IsPlayerAttacking("target") and not debuff(676,"player") then
       Eval('RunMacroText("/stopattack")', 'player')
     end
     if castable(Stealth,"player") and not buff(Stealth,"player") then
