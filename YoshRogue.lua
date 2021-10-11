@@ -196,9 +196,9 @@ Draw:Sync(function(draw)
         draw:Line(px,py,pz,ix,iy,iz,4,55)  
       end
     end
-  end
+  --end
 
-  for object in OM:Objects(OM.Types.Player) do
+  --for object in OM:Objects(OM.Types.Player) do
     if UnitCanAttack("player",object) then
     local tx, ty, tz = ObjectPosition(object)
     local dist = distanceto(object)
@@ -213,6 +213,7 @@ Draw:Sync(function(draw)
     if distanceto(object) >= 30 then
       draw:SetColor(255,0,0)
     end  
+
     Draw:Text(round(dist).."y".." ","GameFontNormalSmall", tx, ty+2, tz+3)
     if UnitHealth(object) >= 70 then
       draw:SetColor(0,255,0)
@@ -223,6 +224,7 @@ Draw:Sync(function(draw)
     if UnitHealth(object) <= 30 then
       draw:SetColor(255,0,0)
     end
+
     Draw:Text(health.."%","GameFontNormalSmall", tx, ty+2, tz+2)
       if UnitClass(object) == "Warrior" then
         Draw:SetColor(198,155,109)
@@ -387,6 +389,9 @@ Routine:RegisterRoutine(function()
     if IsPlayerAttacking("target") and not debuff(676,"player") then
       Eval('RunMacroText("/stopattack")', 'player')
     end
+    if debuff(676,"player") then 
+      Eval('RunMacroText("/startattack")', 'player')
+    end
     if castable(Stealth,"player") and not buff(Stealth,"player") then
       cast(Stealth,"player")
     end
@@ -541,7 +546,7 @@ Routine:RegisterRoutine(function()
     if #_G.RogueSpellQueue > 0 then
       local current_spell = _G.RogueSpellQueue[1]
       table.remove(_G.RogueSpellQueue, 1)
-      if UnitExists(current_spell.target) and not UnitIsDeadOrGhost(current_spell.target) and distancecheck(current_spell.target, current_spell.spell) then
+      if UnitExists(current_spell.target) and not UnitIsDeadOrGhost(current_spell.target) and distancecheck(current_spell.target, current_spell.spell) and not isProtected(current_spell.target) and cooldown(current_spell.spell) == 0 then
         cast(current_spell.spell, current_spell.target)
         print("doing manual override spells")
       else
@@ -642,6 +647,7 @@ Routine:RegisterRoutine(function()
           Debug("Vanishing Wyvern!! ",19386)
         end
       end
+--[[
       if spellName == "Blink" then
         for object in OM:Objects(OM.Types.Player) do
           if sourceName == ObjectName(object) then
@@ -652,24 +658,21 @@ Routine:RegisterRoutine(function()
           end
         end
       end
-      if spellName == "Vanish" and (sourceName ~= myname) and instanceType ~= "arena" then
+]]
+      if spellName == "Vanish" and (sourceName ~= myname) and instanceType ~= "arena" and wowex.wowexStorage.read("fap") then
         for object in OM:Objects(OM.Types.Player) do
           if sourceName == ObjectName(object) then
             if distance("player",object) <= 15 and UnitCanAttack("player",object) and GetItemCooldown(5634) == 0 and UnitTargetingUnit(object,"player") and not buff(6615,"player") and not buff(Stealth,"player") and not mounted() then
-              if wowex.wowexStorage.read("fap") then
-                Eval('RunMacroText("/use Free Action Potion")', 'player')
-              end
+              Eval('RunMacroText("/use Free Action Potion")', 'player')
             end
           end
         end
       end
-      if spellName == "Summon Water Elemental" and instanceType ~= "arena" then
+      if spellName == "Summon Water Elemental" and instanceType ~= "arena" and wowex.wowexStorage.read("fap") then
         for object in OM:Objects(OM.Types.Player) do
           if sourceName == ObjectName(object) then
             if distance("player",object) <= 30 and UnitCanAttack("player",object) and GetItemCooldown(5634) == 0 and UnitTargetingUnit(object,"player") and not buff(6615,"player") and not buff(Stealth,"player") and not mounted() then
-              if wowex.wowexStorage.read("fap") then
-                Eval('RunMacroText("/use Free Action Potion")', 'player')
-              end
+              Eval('RunMacroText("/use Free Action Potion")', 'player')
             end
           end
         end
@@ -701,11 +704,9 @@ Routine:RegisterRoutine(function()
             end
           end
       end
-      if spellName == "Entangling Roots" and destName == myname and instanceType ~= "arena" then
+      if spellName == "Entangling Roots" and destName == myname and instanceType ~= "arena" and wowex.wowexStorage.read("fap") then
         if GetItemCooldown(5634) == 0 and not buff(6615,"player") and not buff(Stealth,"player") and not mounted() then
-          if wowex.wowexStorage.read("fap") then
-            Eval('RunMacroText("/use Free Action Potion")', 'player')
-          end
+          Eval('RunMacroText("/use Free Action Potion")', 'player')
         end
       end
     end
@@ -760,7 +761,7 @@ Routine:RegisterRoutine(function()
               FaceObject(object)
               cast(Kick,object)
               Debug("Kicked off-target instantly ",38768)
-            elseif UnitTargetingUnit("player",object) and not isProtected(object) then
+            elseif (castable(Kick,object) or castable(Gouge,object)) and UnitTargetingUnit("player",object) and not isProtected(object) then
               local _, _, _, _, endTime, _, _, _ = UnitCastingInfo(object);
               local finish = endTime/1000 - GetTime()
               if finish <= 1 and castable(Kick,object) then
@@ -774,7 +775,7 @@ Routine:RegisterRoutine(function()
                 Debug("Gouged " .. UnitName(object) .. " at " .. finish,38764)
               end
             end  
-          elseif isChanneling(object) and kickclass ~= "Hunter" then
+          elseif castable(Kick,object) and isChanneling(object) and kickclass ~= "Hunter" then
             FaceObject(object)
             cast(Kick,object)
             Debug("Kicked " .. UnitName(object) .. " fast ",38768)
@@ -786,15 +787,15 @@ Routine:RegisterRoutine(function()
 
   local function Cooldowns()
     if UnitExists("target") and UnitCanAttack("player","target") and UnitAffectingCombat("player") and not buff(Stealth,"player") and not mounted() then
-
---      if not buff(2893,"target") then
---        if (debuff(11201,"target") or debuff(11398,"target")) then
---          EquipItemByName(28768, 17) -- wound off hand
---        else EquipItemByName(28310, 17) -- crippling weapon
---        end
---      else EquipItemByName(28310, 17) -- crippling weapon 
---      end
-
+--[[
+      if not buff(2893,"target") then
+        if (debuff(11201,"target") or debuff(11398,"target")) then
+          EquipItemByName(28768, 17) -- wound weapon
+        else EquipItemByName(28310, 17) -- crippling weapon
+        end
+      else EquipItemByName(28310, 17) -- crippling weapon 
+      end
+]]
       if castable(Sprint) and distance("player","target") >= 30 and UnitAffectingCombat("target") and not castable(Shadowstep) then
         cast(Sprint)
         Debug("Sprint used on " .. UnitName("player"), 11305)
@@ -804,7 +805,7 @@ Routine:RegisterRoutine(function()
         for offtarget in OM:Objects(OM.Types.Player) do
           if not UnitAffectingCombat(offtarget) and not UnitIsDeadOrGhost(offtarget) and UnitCanAttack("player",offtarget) and GetComboPoints("player","target") <= 2 and not (buff(Stealth,"player") or buff(Vanish,"player")) then
             if not UnitTargetingUnit("player",offtarget) and IsFacing(offtarget, "player") then
-              if distance("player",offtarget) <= 10 then
+              if distance("player",offtarget) <= 5 then
                 local gougetarget = Object(offtarget)
                 FaceObject(gougetarget)
                 cast(Gouge,gougetarget)
@@ -889,9 +890,9 @@ Routine:RegisterRoutine(function()
         kidneychain = kickDuration - GetTime()
       end
 
-      if not GetInventoryItemID("player",16) ~= 28584 then 
-        EquipItemByName(28584,16)
-      end
+      --if not GetInventoryItemID("player",16) ~= 28584 then 
+      --  EquipItemByName(28584,16)
+      --end
 
       if not IsPlayerAttacking("target") and not buff(Vanish,"player") then
         Eval('StartAttack()', 't')
@@ -1197,24 +1198,26 @@ Routine:RegisterRoutine(function()
     end
     for object in OM:Objects(OM.Types.Player) do
       if UnitCanAttack("player",object) and not UnitIsDeadOrGhost(object) and UnitAffectingCombat("player") and not UnitAffectingCombat(object) then
-        if castable(Vanish) and UnitPower("player") >= 40 and distance("player",object) <= 15 and GetUnitName("target") ~= ObjectName(object) and not debuff(Sap,object) and not debuff(CheapShot,"target") and not debuff(Blind,object) then
+        if castable(Vanish) and UnitPower("player") >= 40 and distance("player",object) <= 10 and GetUnitName("target") ~= ObjectName(object) and not debuff(Sap,object) and not debuff(CheapShot,"target") then
           if not isProtected(object) then
             sapobject = Object(object)
+            FaceObject(object)
             TargetUnit(object)
+            Eval('RunMacroText("/stopattack")', 'player')
             cast(26889,"player")
             Debug("Vanish to Sap " .. UnitName(object), 26889)
+            while(buff(26888,"player") and castable(Sap,sapobject) and not UnitAffectingCombat(sapobject)) do
+              TargetUnit(sapobject)
+              FaceObject(sapobject)
+              cast(Sap,sapobject)
+              if debuff(Sap,sapobject) then
+                TargetLastTarget()
+                break
+              end
+              break
+            end
           end
         end   
-      end
-      while(buff(26888,"player") and castable(Sap,sapobject) and not UnitAffectingCombat(sapobject)) do
-        TargetUnit(sapobject)
-        FaceObject(sapobject)
-        cast(Sap,sapobject)
-        if debuff(Sap,"target") then
-          TargetLastTarget()
-          break
-        end
-      break
       end
     end
   end
