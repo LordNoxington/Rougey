@@ -25,6 +25,7 @@
 --Change weap
 --Add better ambush logic??
 --Add C_LossOfControl.GetActiveLossOfControlData event for tracking if I am stunned
+--add for loop ghostly strike
 local Tinkr = ...
 local wowex = {}
 local Routine = Tinkr.Routine
@@ -612,9 +613,9 @@ Routine:RegisterRoutine(function()
       local spellId, spellName, _, _, _, _, _, _, _, _, _, _, _ = select(12, ...)
       local myname = UnitName("player")
       if spellName == "Vanish" and (sourceName ~= myname) then
-        if instanceType == "arena" and castable(Vanish) and not castable(Stealth,"player") and not buff(Stealth,"player") then
+        if instanceType == "arena" and castable(Vanish) and not castable(Stealth,"player") then
           cast(Vanish)
-          Debug("Vanshing to avoid Rogue opener",1856)
+          Debug("Vanishing to avoid Rogue opener",1856)
         end
       end
       if spellName == "Death Coil" and destName == myname then
@@ -655,7 +656,9 @@ Routine:RegisterRoutine(function()
         for object in OM:Objects(OM.Types.Player) do
           if sourceName == ObjectName(object) then
             if distance("player",object) <= 15 and UnitCanAttack("player",object) and GetItemCooldown(5634) == 0 and UnitTargetingUnit(object,"player") and not buff(6615,"player") and not buff(Stealth,"player") and not mounted() then
-              Eval('RunMacroText("/use Free Action Potion")', 'player')
+              if wowex.wowexStorage.read("fap") then
+                Eval('RunMacroText("/use Free Action Potion")', 'player')
+              end
             end
           end
         end
@@ -664,7 +667,9 @@ Routine:RegisterRoutine(function()
         for object in OM:Objects(OM.Types.Player) do
           if sourceName == ObjectName(object) then
             if distance("player",object) <= 30 and UnitCanAttack("player",object) and GetItemCooldown(5634) == 0 and UnitTargetingUnit(object,"player") and not buff(6615,"player") and not buff(Stealth,"player") and not mounted() then
-              Eval('RunMacroText("/use Free Action Potion")', 'player')
+              if wowex.wowexStorage.read("fap") then
+                Eval('RunMacroText("/use Free Action Potion")', 'player')
+              end
             end
           end
         end
@@ -685,6 +690,7 @@ Routine:RegisterRoutine(function()
                       FaceObject(object)
                       cast(Shadowstep,object)
                       MoveForwardStop()
+                      MoveBackwardStop()
                       StrafeLeftStop()
                       StrafeRightStop()
                       Debug("Shadowstep on " .. ObjectName(object),38768)
@@ -697,7 +703,9 @@ Routine:RegisterRoutine(function()
       end
       if spellName == "Entangling Roots" and destName == myname and instanceType ~= "arena" then
         if GetItemCooldown(5634) == 0 and not buff(6615,"player") and not buff(Stealth,"player") and not mounted() then
-          Eval('RunMacroText("/use Free Action Potion")', 'player')
+          if wowex.wowexStorage.read("fap") then
+            Eval('RunMacroText("/use Free Action Potion")', 'player')
+          end
         end
       end
     end
@@ -769,6 +777,7 @@ Routine:RegisterRoutine(function()
           elseif isChanneling(object) and kickclass ~= "Hunter" then
             FaceObject(object)
             cast(Kick,object)
+            Debug("Kicked " .. UnitName(object) .. " fast ",38768)
           end
         end
       end
@@ -778,20 +787,14 @@ Routine:RegisterRoutine(function()
   local function Cooldowns()
     if UnitExists("target") and UnitCanAttack("player","target") and UnitAffectingCombat("player") and not buff(Stealth,"player") and not mounted() then
 
-      --if not debuff(11201,"target") and not buff(34471, "target") and not buff(31224, "target") and not buff(20594, "target") and not debuff(CheapShot, "target") and not debuff(KidneyShot, "target") and (debuff(26864, "target") or targetclass == "Rogue" or targetclass == "Warrior" or targetclass == "Shaman")  then
-      --  EquipItemByName(28189, 17)
-      --elseif debuff(11201,"target") and not debuff(11398,"target") and (targetclass == "Priest" or targetclass == "Mage") then
-      --  EquipItemByName(31331, 17)
+--      if not buff(2893,"target") then
+--        if (debuff(11201,"target") or debuff(11398,"target")) then
+--          EquipItemByName(28768, 17) -- wound off hand
+--        else EquipItemByName(28310, 17) -- crippling weapon
+--        end
+--      else EquipItemByName(28310, 17) -- crippling weapon 
+--      end
 
---[[
-      --if not buff(2893,"target") then
-        if (debuff(11201,"target") or debuff(11398,"target")) then
-          EquipItemByName(28768, 17) -- wound off hand
-          else EquipItemByName(28310, 17) -- crippling weapon
-        end
-        else EquipItemByName(28310, 17) -- crippling weapon 
-      --end
-]]
       if castable(Sprint) and distance("player","target") >= 30 and UnitAffectingCombat("target") and not castable(Shadowstep) then
         cast(Sprint)
         Debug("Sprint used on " .. UnitName("player"), 11305)
@@ -799,7 +802,7 @@ Routine:RegisterRoutine(function()
 
       if UnitExists("target") and health("target") <= 95 then
         for offtarget in OM:Objects(OM.Types.Player) do
-          if not UnitAffectingCombat(offtarget) and UnitCanAttack("player",offtarget) and GetComboPoints("player","target") <= 2 and not (buff(Stealth,"player") or buff(Vanish,"player")) then
+          if not UnitAffectingCombat(offtarget) and not UnitIsDeadOrGhost(offtarget) and UnitCanAttack("player",offtarget) and GetComboPoints("player","target") <= 2 and not (buff(Stealth,"player") or buff(Vanish,"player")) then
             if not UnitTargetingUnit("player",offtarget) and IsFacing(offtarget, "player") then
               if distance("player",offtarget) <= 10 then
                 local gougetarget = Object(offtarget)
@@ -863,6 +866,9 @@ Routine:RegisterRoutine(function()
           end
         end
         if IsBehind("target") then
+          if castable(Ambush) and targetclass == "Mage" and GetInventoryItemID("player",16) == 28768 then
+            cast(Ambush,"target")
+          end
           if castable(Garrote) and (targetclass == "Mage" or targetclass == "Priest" or targetclass == "Shaman" or targetclass == "Warlock" or targetclass == "Druid" or targetclass == "Hunter") and not debuff(18469, "target") and GetUnitSpeed("target") <= 8 --[[and not debuff(26884,"target")]] then
             cast(Premeditation, "target")
             cast(Garrote,"target")
@@ -870,9 +876,6 @@ Routine:RegisterRoutine(function()
           if castable(CheapShot) and not buff(34471,"target") then
             cast(Premeditation, "target")
             cast(CheapShot,"target")
-          end
-          if wowex.wowexStorage.read("openerbehind") == "Ambush" and castable(Ambush) then
-            cast(Ambush,"target")
           end
         end
       end
@@ -886,7 +889,11 @@ Routine:RegisterRoutine(function()
         kidneychain = kickDuration - GetTime()
       end
 
-      if not IsPlayerAttacking("target") then
+      if not GetInventoryItemID("player",16) ~= 28584 then 
+        EquipItemByName(28584,16)
+      end
+
+      if not IsPlayerAttacking("target") and not buff(Vanish,"player") then
         Eval('StartAttack()', 't')
       end
 
@@ -997,7 +1004,7 @@ Routine:RegisterRoutine(function()
       --  cast(Shiv, "target")
       --  Debug("Shiv for Mind Numbing on " .. UnitName("target"),5938) 
       end     
-      if castable(GhostlyStrike, "target") and not buff(GhostlyStrike,"player") and health() <= 95 and myComboPoints < 5 and UnitTargetingUnit("target","player") and UnitPowerType("target") ~= 0 and not debuff(CheapShot,"target") then
+      if castable(GhostlyStrike, "target") and not buff(GhostlyStrike,"player") and health() <= 95 and myComboPoints < 5 --[[and UnitTargetingUnit("target","player") and UnitPowerType("target") ~= 0]] and not debuff(CheapShot,"target") and debuff(26864, "target") then
         cast(GhostlyStrike, "target")
       end
       --[[
@@ -1267,7 +1274,7 @@ Routine:RegisterRoutine(function()
   --end
 end, Routine.Classes.Rogue, Routine.Specs.Rogue)
 Routine:LoadRoutine(Routine.Specs.Rogue)
-print("\124cffff80ff\124Tinterface\\ChatFrame\\UI-ChatIcon-Blizz:12:20:0:0:32:16:4:28:0:16\124t [Yosh] whispers: Hello, " .. UnitName("player") .. " Welcome to my routine :)")
+print("\124cffff80ff\124Tinterface\\ChatFrame\\UI-ChatIcon-Blizz:12:20:0:0:32:16:4:28:0:16\124t [Yosh] whispers: Hello, " .. UnitName("player") .. " welcome to my routine :)")
 
 local example = {
   key = "tinkr_configs",
@@ -1390,12 +1397,17 @@ local mytable = {
       items = 
       {
         { key = "heading", type = "heading", color = 'FFF468', text = "Poison" },
+
         { key = "mainhandpoison", width = 175, label = "Mainhand", text = wowex.wowexStorage.read("mainhandpoison"), type = "dropdown",
         options = {"Instant", "Wound","Crippling", "None"} },
+        { key = "mainhandid", label = "Main Hand itemID", text = wowex.wowexStorage.read("mainhandid"), type = "freetext", min = 1, max = 40000, step = 1},
+
         { key = "offhandpoison", width = 175, label = "Offhand", text = wowex.wowexStorage.read("offhandpoison"), type = "dropdown",
         options = {"Deadly", "MindNumbing","Crippling","None"} },
-        { key = "thistletea",  type = "checkbox", text = "Use Thistle Tea?" , desc = "Will use on targets during Kidney Shot" },
-        { key = "fap",  type = "checkbox", text = "Use Free Action Potion?" , desc = "Uses FAPs at certain times" },
+        { key = "offhandid", label = "Crippling itemID", text = wowex.wowexStorage.read("cripplingid"), type = "slider", min = 1, max = 40000, step = 1},
+        { key = "offhandid2", label = "Wound itemID", text = wowex.wowexStorage.read("woundid"), type = "slider", min = 1, max = 40000, step = 1},
+        { key = "ambushid", label = "Ambush itemID", text = wowex.wowexStorage.read("ambushid"), type = "slider", min = 1, max = 40000, step = 1},
+
         { key = "heading", type = "heading", color = 'FFF468', text = "Stealth" },
         {type = "text", text = "DynOM = Scans the area around you for NPC aggro ranges and puts you into stealth when you get close to them.", color = 'FFF468'},
         {type = "text", text = "DynTarget = Stealthes you when you're near your TARGET's aggro range.", color = 'FFF468'},       
@@ -1405,6 +1417,8 @@ local mytable = {
         
         { key = "heading", type = "heading", color = 'FFF468', text = "Other" },
         { key = "autoloot",  type = "checkbox", text = "Auto Loot", desc = "" },
+        { key = "thistletea",  type = "checkbox", text = "Use Thistle Tea?" , desc = "Will use on targets during Kidney Shot" },
+        { key = "fap",  type = "checkbox", text = "Use Free Action Potion?" , desc = "Uses FAPs at certain times" },
         
       }
     },
