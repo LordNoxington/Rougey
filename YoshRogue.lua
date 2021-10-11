@@ -531,17 +531,6 @@ Routine:RegisterRoutine(function()
     end
   end
 
-  function CacheTarget()
-    if (UnitExists("target") and UnitIsPlayer("target")) then
-      if (oldTarget == nil) then -- no cache -> set cache to current target
-        oldTarget = Object("target")
-      else -- I already have a an old target
-        oldTarget = currentTarget;
-      end
-    currentTarget = Object("target")
-    end
-  end
-
   local function Queue()
     if #_G.RogueSpellQueue > 0 then
       local current_spell = _G.RogueSpellQueue[1]
@@ -719,6 +708,17 @@ Routine:RegisterRoutine(function()
       end
     end
   end
+
+  function CacheTarget()
+    if (UnitExists("target")) then
+      if (oldTarget == nil) then -- no cache -> set cache to current target
+        oldTarget = Object("target")
+      else -- I already have a an old target
+        oldTarget = currentTarget;
+      end
+    currentTarget = Object("target")
+    end
+  end
   
   function t:UNIT_SPELLCAST_SUCCEEDED()
     t:SetScript("OnEvent", function(self, event, arg1, arg2, arg3)
@@ -732,11 +732,18 @@ Routine:RegisterRoutine(function()
         end
       end
       if event == "PLAYER_TARGET_CHANGED" then 
-        CacheTarget()
-        if UnitClass(oldTarget) == "Hunter" then
-          if buff(5384,oldTarget) then
-            FaceObject(oldTarget)
-            TargetUnit(oldTarget)
+        for hunter in OM:Objects(OM.Types.Player) do
+          if distance("player",hunter) <= 10 then
+            if UnitClass(hunter) == "Hunter" then
+              if UnitCanAttack("player",hunter) then
+                if buff(5384,hunter) then
+                  FaceObject(hunter)
+                  TargetUnit(hunter)
+                  Debug("Re-targeting Huntard",5384)
+                  break
+                end
+              end
+            end
           end
         end
       end
@@ -892,9 +899,9 @@ Routine:RegisterRoutine(function()
         kidneychain = kickDuration - GetTime()
       end
 
-      if not GetInventoryItemID("player",16) ~= 28584 then 
-        --EquipItemByName(28584,16)
-      end
+      --if not GetInventoryItemID("player",16) ~= 28584 then 
+      --  EquipItemByName(28584,16)
+      --end
 
       if not IsPlayerAttacking("target") and not buff(Vanish,"player") then
         Eval('StartAttack()', 't')
