@@ -532,7 +532,7 @@ Routine:RegisterRoutine(function()
   end
 
   function CacheTarget()
-    if (UnitExists("target")) then
+    if (UnitExists("target") and UnitIsPlayer("target")) then
       if (oldTarget == nil) then -- no cache -> set cache to current target
         oldTarget = Object("target")
       else -- I already have a an old target
@@ -570,9 +570,9 @@ Routine:RegisterRoutine(function()
       end 
       for object in OM:Objects(OM.CreatureTypes) do
         local totemname = ObjectName(object)
-        if health("target") >= 20 and not (buff(Stealth,"player") or buff(Vanish,"player")) then
-          if totemname == "Stoneskin Totem" or totemname == "Windfury Totem" or totemname == "Poison Cleansing Totem" or totemname == "Mana Tide Totem" or totemname == "Grounding Totem" or totemname == "Earthbind Totem" then
-            if UnitCanAttack("player",object) and distance("player",object) <= 5 then
+        if totemname == "Stoneskin Totem" or totemname == "Windfury Totem" or totemname == "Poison Cleansing Totem" or totemname == "Mana Tide Totem" or totemname == "Grounding Totem" or totemname == "Earthbind Totem" then
+          if distance("player",totemname) <= 5 and health("target") >= 20 and not (buff(Stealth,"player") or buff(Vanish,"player")) then
+            if UnitCanAttack("player",object) then
               CacheTarget()
               totemobject = Object(object)
               TargetUnit(totemobject)
@@ -803,13 +803,15 @@ Routine:RegisterRoutine(function()
 
       if UnitExists("target") and health("target") <= 95 then
         for offtarget in OM:Objects(OM.Types.Player) do
-          if not UnitAffectingCombat(offtarget) and not UnitIsDeadOrGhost(offtarget) and UnitCanAttack("player",offtarget) and GetComboPoints("player","target") <= 2 and not (buff(Stealth,"player") or buff(Vanish,"player")) then
-            if not UnitTargetingUnit("player",offtarget) and IsFacing(offtarget, "player") then
-              if distance("player",offtarget) <= 5 then
-                local gougetarget = Object(offtarget)
-                FaceObject(gougetarget)
-                cast(Gouge,gougetarget)
-                Debug("Gouging off-target " .. UnitName(gougetarget), 11305)
+          if distance("player",offtarget) <= 5 then
+            if castable(Gouge,offtarget) then
+              if not UnitAffectingCombat(offtarget) and not UnitIsDeadOrGhost(offtarget) and UnitCanAttack("player",offtarget) and GetComboPoints("player","target") <= 2 and not (buff(Stealth,"player") or buff(Vanish,"player")) then
+                if not UnitTargetingUnit("player",offtarget) and IsFacing(offtarget, "player") then
+                  local gougetarget = Object(offtarget)
+                  FaceObject(gougetarget)
+                  cast(Gouge,gougetarget)
+                  Debug("Gouging off-target " .. UnitName(gougetarget), 11305)
+                end
               end
             end
           end
@@ -890,9 +892,9 @@ Routine:RegisterRoutine(function()
         kidneychain = kickDuration - GetTime()
       end
 
-      --if not GetInventoryItemID("player",16) ~= 28584 then 
-      --  EquipItemByName(28584,16)
-      --end
+      if not GetInventoryItemID("player",16) ~= 28584 then 
+        --EquipItemByName(28584,16)
+      end
 
       if not IsPlayerAttacking("target") and not buff(Vanish,"player") then
         Eval('StartAttack()', 't')
@@ -1180,14 +1182,14 @@ Routine:RegisterRoutine(function()
 
     --for i, object in ipairs(Objects()) do
     for object in OM:Objects(OM.Types.Player) do
-      if UnitCanAttack("player",object) and not UnitIsDeadOrGhost(object) then
-        if buff(Stealth,object) then
-          if buff(Stealth,"player") and distance("player",object) <= 20 then
+      if distance("player",object) <= 20 and buff(Stealth,object) then
+        if UnitCanAttack("player",object) and not UnitIsDeadOrGhost(object) then
+          if buff(Stealth,"player") then
             TargetUnit(object)
             FaceObject(object)
             cast(Sap,object)
             Debug("Sap".." "..UnitName(object),11297)
-          elseif castable(Gouge,object) then
+          elseif not buff(Stealth,"player") and castable(Gouge,object) then
             TargetUnit(object)
             FaceObject(object)
             cast(Gouge,object)
@@ -1197,15 +1199,17 @@ Routine:RegisterRoutine(function()
       end
     end
     for object in OM:Objects(OM.Types.Player) do
-      if UnitCanAttack("player",object) and not UnitIsDeadOrGhost(object) and UnitAffectingCombat("player") and not UnitAffectingCombat(object) then
-        if castable(Vanish) and UnitPower("player") >= 40 and distance("player",object) <= 10 and GetUnitName("target") ~= ObjectName(object) and not debuff(Sap,object) and not debuff(CheapShot,"target") then
-          if not isProtected(object) then
-            sapobject = Object(object)
-            FaceObject(object)
-            TargetUnit(object)
-            Eval('RunMacroText("/stopattack")', 'player')
-            cast(26889,"player")
-            Debug("Vanish to Sap " .. UnitName(object), 26889)
+      if castable(Vanish) and not IsPoisoned("player") and distance("player",object) <= 10 then 
+        if UnitPower("player") >= 40 and GetUnitName("target") ~= ObjectName(object) and not debuff(Sap,object) and not debuff(CheapShot,"target") then
+          if UnitCanAttack("player",object) and not UnitIsDeadOrGhost(object) and UnitAffectingCombat("player") and not UnitAffectingCombat(object) then
+            if not isProtected(object) then
+              sapobject = Object(object)
+              FaceObject(object)
+              TargetUnit(object)
+              Eval('RunMacroText("/stopattack")', 'player')
+              cast(26889,"player")
+              Debug("Vanish to Sap " .. UnitName(object), 26889)
+            end
             while(buff(26888,"player") and castable(Sap,sapobject) and not UnitAffectingCombat(sapobject)) do
               TargetUnit(sapobject)
               FaceObject(sapobject)
