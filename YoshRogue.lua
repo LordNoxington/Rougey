@@ -30,11 +30,12 @@
 --isNova - check for silences, and cansee on bursty
 --CHECK DR's for KS DONE
 --CHECK DR'S FOR CS DONE
---Change cast() to return cast()
+--Change return cast() to return return cast()
 --change weapon swaps (dont use mind numbing), and dont use crippling on druid
 -- rupture if no healers
 -- add cloak if priest comes close -- DONE
 -- fix totem retarget -- done?
+-- add casts for spring and evasion if Vanish is on CD
 local Tinkr = ...
 local wowex = {}
 local Routine = Tinkr.Routine
@@ -328,7 +329,7 @@ local t = CreateFrame("Frame")
 t:RegisterEvent("UNIT_SPELLCAST_SUCCEEDED")
 t:RegisterEvent("PLAYER_TARGET_CHANGED")
 
-
+--[[
 local function LogEvent(self, event, ...)
   if event == "COMBAT_LOG_EVENT_UNFILTERED" or event == "COMBAT_LOG_EVENT" then
     self:LogEvent_Original(event, CombatLogGetCurrentEventInfo())
@@ -355,7 +356,7 @@ else
       self:UnregisterAllEvents()
     end
   end)
-end
+end]]
 
 Routine:RegisterRoutine(function()
   local myComboPoints = GetComboPoints("player","target")
@@ -366,7 +367,7 @@ Routine:RegisterRoutine(function()
   local currentTarget
 
   local function isProtected(unit)
-    if buff(1020,unit) or debuffduration(Gouge,unit) > 0.2 or debuffduration(Sap,unit) > 0.2 or debuffduration(Blind,unit) > 0.2 or debuff(12826,unit) or buff(45438,unit) or buff(642,unit) or buff(1022,unit) or debuff(33786,unit) then 
+    if buff(1020,unit) or debuffduration(Gouge,unit) > 0.4 or debuffduration(Sap,unit) > 1 or debuffduration(Blind,unit) > 0.2 or debuff(12826,unit) or buff(45438,unit) or buff(642,unit) or buff(1022,unit) or debuff(33786,unit) then 
       return true end
     end
 
@@ -381,24 +382,79 @@ Routine:RegisterRoutine(function()
       local debuff,_,_,debufftype = UnitDebuff(unit,i)
       if not debuff then break end
       if debufftype == "Disease" or debufftype == "Curse" or debufftype == "Bleed" or debufftype == "Magic" then
-        return debuff
+        return true
       end
     end
   end
 
-  --local mainHandLink = GetInventoryItemLink("player", GetInventorySlotInfo(16))
-  --local _, _, _, _, _, _, itemType5 = GetItemInfo(mainHandLink)
+  local function UnitTargetingUnit(unit1,unit2)
+    if UnitIsVisible(UnitTarget(unit1)) and UnitIsVisible(unit2) then
+      if UnitGUID(UnitTarget(unit1)) == UnitGUID(unit2) then
+        return true
+      end
+    end
+  end
+
+  _G.QueueRogueCast = function(_spell, _target)
+    queueobject = Object("target")
+    table.insert(_G.RogueSpellQueue, {spell=_spell, target=_target})
+  end
+
+  local function Queue()
+    if UnitTargetingUnit("player",queueobject) then
+      if #_G.RogueSpellQueue > 0 and cooldown(Hemorrhage) == 0 then
+        local current_spell = _G.RogueSpellQueue[1]
+        --[[
+        if _G.RogueSpellQueue[1] == _G.RogueSpellQueue[2] then
+          table.remove(_G.RogueSpellQueue, 2)
+          table.remove(_G.RogueSpellQueue, 3)
+          table.remove(_G.RogueSpellQueue, 4)
+          table.remove(_G.RogueSpellQueue, 5)
+          table.remove(_G.RogueSpellQueue, 6)
+          table.remove(_G.RogueSpellQueue, 7)
+          table.remove(_G.RogueSpellQueue, 8)
+          table.remove(_G.RogueSpellQueue, 9)
+          table.remove(_G.RogueSpellQueue, 10)
+          table.remove(_G.RogueSpellQueue, 11)
+          table.remove(_G.RogueSpellQueue, 12)
+          table.remove(_G.RogueSpellQueue, 13)
+          table.remove(_G.RogueSpellQueue, 14)
+          table.remove(_G.RogueSpellQueue, 15)
+        end
+        ]]
+        --table.remove(_G.RogueSpellQueue, 1)
+        counter = #_G.RogueSpellQueue
+          for i=0, counter do 
+            if _G.RogueSpellQueue[1] == _G.RogueSpellQueue[i] then
+              table.remove(_G.RogueSpellQueue, i)
+            end
+          end
+        if UnitExists(current_spell.target) and not UnitIsDeadOrGhost(current_spell.target) and distancecheck(current_spell.target, current_spell.spell) and not isProtected(current_spell.target) then
+          print("doing manual override spells")
+          return cast(current_spell.spell, current_spell.target)
+        else
+          print("manual cast was on invalid target. skipped")
+        end
+      end
+    else
+      table.remove(_G.RogueSpellQueue, 1)
+    end
+  end
+
   if gcd() > latency() then return end
-  --if wowex.keystate() then return end
-  if UnitIsDeadOrGhost("player") or isProtected("target") or debuff(676,"player") --[[or (debuff(KidneyShot,"target") and isNova("target"))]] then
+
+  if UnitIsDeadOrGhost("player") or isProtected("target") or debuff(676,"player") or (debuff(KidneyShot,"target") and isNova("target")) then
     if IsPlayerAttacking("target") and not debuff(676,"player") then
       Eval('RunMacroText("/stopattack")', 'player')
     end
     if debuff(676,"player") then 
       Eval('RunMacroText("/startattack")', 'player')
     end
-    if castable(Stealth,"player") and not buff(Stealth,"player") and not IsPoisoned("player") then
-      cast(Stealth,"player")
+    if castable(Stealth,"player") and not buff(Stealth,"player") and not buff(Vanish,"player") and not IsPoisoned("player") and not debuff(12867,"player") then
+      return cast(Stealth,"player")
+    end
+    if not IsPlayerAttacking("target") and not debuff(676,"player") then
+      return Queue()
     end
   return end
 
@@ -477,39 +533,6 @@ Routine:RegisterRoutine(function()
     end
   end
 
-  local function UnitTargetingUnit(unit1,unit2)
-    if UnitIsVisible(UnitTarget(unit1)) and UnitIsVisible(unit2) then
-      if UnitGUID(UnitTarget(unit1)) == UnitGUID(unit2) then
-        return true
-      end
-    end
-  end
-
-  _G.QueueRogueCast = function(_spell, _target)
-    queueobject = Object("target")
-    table.insert(_G.RogueSpellQueue, {spell=_spell, target=_target})
-  end
-
-  local function Queue()
-    if UnitTargetingUnit("player",queueobject) then
-      if #_G.RogueSpellQueue > 0 then
-        local current_spell = _G.RogueSpellQueue[1]
-        if _G.RogueSpellQueue[1] == _G.RogueSpellQueue[2] then
-          table.remove(_G.RogueSpellQueue, 2)
-        end
-        table.remove(_G.RogueSpellQueue, 1)
-        if UnitExists(current_spell.target) and not UnitIsDeadOrGhost(current_spell.target) and distancecheck(current_spell.target, current_spell.spell) and not isProtected(current_spell.target) then
-          cast(current_spell.spell, current_spell.target)
-          print("doing manual override spells")
-        else
-          print("manual cast was on invalid target. skipped")
-        end
-      end
-    else
-      table.remove(_G.RogueSpellQueue, 1)
-    end
-  end
-
   local function isElite(unit)
     local classification = UnitClassification(unit)
     if classification == "elite" or classification == "rareelite" or classification == "worldboss" then
@@ -546,24 +569,24 @@ Routine:RegisterRoutine(function()
     local evisc5calculated = ap * (5 * 0.03) + e5 * multiplier
       if not UnitIsPlayer("target") and castable(Eviscerate,"target") then
         if UnitHealth("target") <= evisc1calculated and myComboPoints == 1 then
-          cast(Eviscerate)
           Debug("Calculated Execute on " .. UnitName("target"), 26865)
+          return cast(Eviscerate)
         end
         if UnitHealth("target") <= evisc2calculated and myComboPoints == 2 then
-          cast(Eviscerate)
           Debug("Calculated Execute on " .. UnitName("target"), 26865)
+          return cast(Eviscerate)
         end
         if UnitHealth("target") <= evisc3calculated and myComboPoints == 3 then
-          cast(Eviscerate)
           Debug("Calculated Execute on " .. UnitName("target"), 26865)
+          return cast(Eviscerate)
         end
         if UnitHealth("target") <= evisc4calculated and myComboPoints == 4 then
-          cast(Eviscerate)
           Debug("Calculated Execute on " .. UnitName("target"), 26865)
+          return cast(Eviscerate)
         end
         if UnitHealth("target") <= evisc5calculated and myComboPoints == 5 then
-          cast(Eviscerate)
           Debug("Calculated Execute on " .. UnitName("target"), 26865)
+          return cast(Eviscerate)
         end
       end
     end
@@ -571,27 +594,31 @@ Routine:RegisterRoutine(function()
   
   local function Defensives()
     if UnitAffectingCombat("player") and not mounted() and not buff(Stealth,"player") and not buff(Vanish,"player") then
+
 --[[
-      if instanceType == "arena" or instanceType == "pvp" then
-        if partyMembersAround("player", 15) >= 1 then
-          for object in OM:Objects(OM.Types.Player) do
-            if UnitIsPlayer(object) and distance("player",object) <= 15 and enemiesAround(object, 15) >= 2 then
-              if UnitClass(object) == "Priest" and castable(CloakOfShadows) then
-                cast(CloakOfShadows,"player")
-                Debug("Cloaking Priest Fear!",27223)
+      if PyschicScreamCD == nil or GetTime() >= PsychicScreamCD then
+        if instanceType == "arena" or instanceType == "pvp" then
+          if partyMembersAround("player", 15) >= 1 and castable(CloakOfShadows) then
+            for object in OM:Objects(OM.Types.Player) do
+              if UnitClass(object) == "Priest" then
+                if UnitIsPlayer(object) and distance("player",object) <= 15 and enemiesAround(object, 15) >= 2 and not isCasting(object) and moving(object) then
+                  Debug("Cloaking Priest Fear!",27223)
+                  return cast(CloakOfShadows,"player")
+                end
               end
             end
           end
         end
       end
 ]]
+
       if instanceType ~= "arena" then
         if health() <= 15 and not buff(30458, "player") then
           Eval('RunMacroText("/use 6")', 'player')
         end
       end
       
-      if UnitIsPlayer("target") and health("target") <= 70 and distance("player","target") <= 10 then
+      if UnitIsPlayer("target") and health("target") <= 85 and distance("player","target") <= 10 then
         Eval('RunMacroText("/use Figurine - Nightseye Panther")', 'player')
       end
       if instanceType ~= "arena" and wowex.wowexStorage.read("thistletea") then
@@ -617,9 +644,12 @@ Routine:RegisterRoutine(function()
           end
         end
       end
-      if castable(Evasion,"player") and health() <= 95 and UnitTargetingUnit("target","player") and (targetclass == "Warrior" or targetclass == "Rogue") then
-        cast(Evasion,"player")
+      if castable(Evasion,"player") and health() <= 99 and (UnitClass(ObjectTargetingMe) == "Warrior" or UnitClass(ObjectTargetingMe) == "Rogue" or UnitClass(ObjectTargetingMe) == "Paladin" or UnitClass(ObjectTargetingMe) == "Hunter" or UnitClass(ObjectTargetingMe) == "Druid") then
+        return cast(Evasion,"player")
       end
+      --if castable(Evasion,"player") and health("target") <= 40 and (targetclass == "Warrior" or targetclass == "Rogue" or targetclass == "Druid") then
+      --  return cast(Evasion,"player")
+      --end
     end
   end
 
@@ -630,9 +660,9 @@ Routine:RegisterRoutine(function()
   end
 
   function f:COMBAT_LOG_EVENT_UNFILTERED(...)
+  --[[if UnitAffectingCombat("player") and not mounted() and not buff(Stealth,"player") and not buff(Vanish,"player") then]]
+
     local timestamp, subevent, _, sourceGUID, sourceName, _, _, destGUID, destName, _, _ = ...
-    --local spellId, spellName, spellSchool
-    --local amount, overkill, school, resisted, blocked, absorbed, critical, glancing, crushing, isOffHand
 
     if totemobject ~= nil then
       if UnitTargetingUnit("player",totemobject) then
@@ -641,7 +671,8 @@ Routine:RegisterRoutine(function()
           if sourceGUID == UnitGUID("player") then
             if destGUID == totemGUID and destName == UnitName(totemobject) then
               if amount >= UnitHealth(totemobject) then
-                TargetLastTarget()
+                --TargetLastTarget()
+                TargetUnit(oldertarget)
                 killtime = GetTime()
                 Debug("Retargeting Shaman",27223)
               end
@@ -651,25 +682,31 @@ Routine:RegisterRoutine(function()
       end
     end
 
-    if subevent == "SPELL_AURA_REMOVED" then
+    if subevent == "SPELL_AURA_REMOVED" or subevent == "SPELL_AURA_BROKEN" or subevent == "SPELL_AURA_BROKEN_SPELL" then
       local spellId, spellName = select(12,...)
       if spellId == 8643 then
         KidneyTarget = destName
-        KidneyDR = GetTime() + 20
+        KidneyDR = GetTime() + 21
+        print("Kidney Gone - " .. KidneyDR)
       end
     end
 
-    if subevent =="SPELL_AURA_REMOVED" then
+    if subevent == "SPELL_MISSED" then
       local spellId, spellName = select(12,...)
       if spellId == 1833 then
-        CheapShotTarget = destName
-        CheapShotDR = GetTime() + 20
-      end
-      if spellId == 11297 then
-        SapTarget = destName
-        SapHemoCD = GetTime() + 5
+        CheapShotDR = nil
+        CheapShotTarget = nil 
       end
     end
+
+    --if subevent == "SPELL_AURA_APPLIED" then
+    --  local spellId, spellName = select(12,...)
+    --  if spellId == 1833 and sourceName == myname then
+    --    CheapShotDR = GetTime() + 25
+    --    CheapShotTarget = destName
+    --    print(CheapShotDR)
+    --  end
+    --end
 
     if UnitClass(ObjectTargetingMe) == "Rogue" then
       if subevent == "SPELL_CAST_SUCCESS" then
@@ -677,8 +714,8 @@ Routine:RegisterRoutine(function()
       local myname = UnitName("player")
         if spellName == "Vanish" and (sourceName ~= myname) then
           if instanceType == "arena" and castable(Vanish,"player") and not castable(Stealth,"player") and not buff(Stealth,"player") then
-            cast(Vanish)
-            Debug("Vanishing to avoid Rogue opener",1856)
+            Debug("Vanishing to avoid Rogue opener",1856)            
+            return cast(Vanish)
           end
         end
       end
@@ -687,28 +724,33 @@ Routine:RegisterRoutine(function()
     if subevent == "SPELL_CAST_SUCCESS" then
       if spellName == "Death Coil" and destName == myname then
         if castable(Vanish,"player") then
-          cast(Vanish)
-          Debug("Vanishing Death Coil!! ",27223)
+          Debug("Vanishing Death Coil!! ",27223)          
+          return cast(Vanish)
         elseif not castable(Vanish,"player") and castable(CloakOfShadows,"player") then
-          cast(CloakOfShadows)
           Debug("Cloaking Death Coil!! ",27223)
+          return cast(CloakOfShadows)
         end
       end
       if destName == myname and spellName == "Pyroblast" then
         if castable(Vanish,"player") then
-          cast(Vanish)
-          Debug("Vanishing Pyroblast!! ",33938)
+          Debug("Vanishing Pyroblast!! ",33938)          
+          return cast(Vanish)
         elseif not castable(Vanish,"player") and castable(CloakOfShadows,"player") then
-          cast(CloakOfShadows)
           Debug("Cloaking Pyroblast!! ",33938)
+          return cast(CloakOfShadows)
         end
       end
       if destName == myname and spellName == "Wyvern Sting" then
         if castable(Vanish,"player") then
-          cast(Vanish)
           Debug("Vanishing Wyvern!! ",19386)
+          return cast(Vanish)
         end
       end
+      if spellName == "Psychic Scream" then
+        PsychicScreamCD = GetTime() + 30
+        print("Psychic Scream used" .. PsychicScreamCD)
+      end
+
 --[[
       if spellName == "Blink" then
         for object in OM:Objects(OM.Types.Player) do
@@ -744,7 +786,7 @@ Routine:RegisterRoutine(function()
     if subevent == "SPELL_CAST_START" then
       local spellId, spellName, _, _, _, _, _, _, _, _, _, _, _ = select(12, ...)
       if spellName == "Fear" or spellName == "Polymorph" or spellName == "Regrowth" or spellName == "Cyclone" or spellName == "Greater Heal" or spellName == "Flash Heal" or spellname == "Healing Wave" or spellname == "Binding Heal" or spellName == "Mana Burn" or spellName == "Drain Mana" or spellName == "Holy Light" then
-          if health("target") <= 70 then
+          if health("target") <= 30 then
           --for i, object in ipairs(Objects()) do
             for object in OM:Objects(OM.Types.Player) do
               if sourceName == ObjectName(object) then
@@ -770,6 +812,16 @@ Routine:RegisterRoutine(function()
           Eval('RunMacroText("/use Free Action Potion")', 'player')
         end
       end
+      if (spellName == "Polymorph" or spellName == "Fear") and destName == UnitName("player") then
+        for object in OM:Objects(OM.Types.Player) do
+          if sourceName == ObjectName(object) then
+            if UnitCanAttack("player",object) and isCasting(object) and UnitExists("target") then
+              Debug("Cloaking Polymorph/Fear",31224)
+              return Eval('RunMacroText("/run _G.QueueRogueCast([[Cloak Of Shadows]], [[player]])")', 'player')
+            end
+          end
+        end
+      end
     end
 
     if subevent == "SPELL_INTERRUPT" then
@@ -780,6 +832,7 @@ Routine:RegisterRoutine(function()
       end
     end
   end
+  
 
   function CacheTarget()
     if (UnitExists("target")) then
@@ -793,6 +846,7 @@ Routine:RegisterRoutine(function()
   end
   
   function t:UNIT_SPELLCAST_SUCCEEDED()
+  --[[if UnitAffectingCombat("player") and not mounted() and not buff(Stealth,"player") and not buff(Vanish,"player") then]]
     t:SetScript("OnEvent", function(self, event, arg1, arg2, arg3)
       trinketUsedBy = nil
       if event == "UNIT_SPELLCAST_SUCCEEDED" then
@@ -802,10 +856,26 @@ Routine:RegisterRoutine(function()
             Debug("Trinket used by " .. ObjectName(trinketUsedBy),42292)
           end
         end
+        if arg3 == 11297 and arg1 == "player" then
+          SAPCD = GetTime() + 5
+            print(SAPCD)
+        end
+        if arg3 == 1833 and arg1 == "player" then
+          CheapShotDR = GetTime() + 23
+          CheapShotTarget = UnitName("target")
+          print("Cheap Shot - " .. CheapShotDR)
+        end
+        --if arg3 == 1833 then
+        --  if UnitExists("target") then
+        --    if debuff(CheapShot,"target") then
+        --      CheapShotDR = GetTime() + 25
+        --    end
+        --  end
+        --end
       end
       if event == "PLAYER_TARGET_CHANGED" then 
         for hunter in OM:Objects(OM.Types.Player) do
-          if distance("player",hunter) <= 10 then
+          if distance("player",hunter) <= 15 then
             if UnitClass(hunter) == "Hunter" then
               if UnitCanAttack("player",hunter) then
                 if buff(5384,hunter) then
@@ -835,20 +905,20 @@ Routine:RegisterRoutine(function()
           if isCasting(object) and kickclass ~= "Hunter" then
             if castable(Kick,object) and not UnitTargetingUnit("player",object) and not isProtected(object) then
               FaceObject(object)
-              cast(Kick,object)
               Debug("Kicked off-target instantly ",38768)
+              return cast(Kick,object)
             elseif (castable(Kick,object) or castable(Gouge,object)) and UnitTargetingUnit("player",object) and not isProtected(object) then
               local _, _, _, _, endTime = UnitCastingInfo(object);
               local finish = endTime/1000 - GetTime()
               if finish <= 0.5 and castable(Kick,object) then
                 FaceObject(object)
-                cast(Kick,object)
                 Debug("Kicked " .. UnitName(object) .. " at " .. finish,38768)
+                return cast(Kick,object)
               end
               --if finish <= 0.5 and castable(Gouge,object) and not IsBehind("player",object) and not castable(Kick,object) then
               --  FaceObject(object)
-              --  cast(Gouge,object)
               --  Debug("Gouged " .. UnitName(object) .. " at " .. finish,38764)
+              --  return cast(Gouge,object)
               --end
             end  
           elseif castable(Kick,object) and isChanneling(object) and kickclass ~= "Hunter" then
@@ -856,8 +926,8 @@ Routine:RegisterRoutine(function()
             local startTime = startTimeMS/1000 - GetTime()
             if startTime >= 0.3 and castable(Kick,object) then
               FaceObject(object)
-              cast(Kick,object)
               Debug("Kicked " .. UnitName(object) .. " fast ",38768)
+              return cast(Kick,object)
             end
           end
         end
@@ -869,26 +939,26 @@ Routine:RegisterRoutine(function()
           if isCasting(object) and kickclass ~= "Hunter" then
             if castable(Kick,object) and not UnitTargetingUnit("player",object) and not isProtected(object) then
               FaceObject(object)
-              cast(Kick,object)
               Debug("Kicked off-target instantly ",38768)
+              return cast(Kick,object)
             elseif (castable(Kick,object) or castable(Gouge,object)) and UnitTargetingUnit("player",object) and not isProtected(object) then
               local _, _, _, _, endTime, _, _, _ = UnitCastingInfo(object);
               local finish = endTime/1000 - GetTime()
               if finish <= 0.5 and castable(Kick,object) then
                 FaceObject(object)
-                cast(Kick,object)
                 Debug("Kicked " .. UnitName(object) .. " at " .. finish,38768)
+                return cast(Kick,object)
               end
               if finish <= 0.5 and castable(Gouge,object) and not IsBehind("player",object) and not castable(Kick,object) then
                 FaceObject(object)
-                cast(Gouge,object)
                 Debug("Gouged " .. UnitName(object) .. " at " .. finish,38764)
+                return cast(Gouge,object)
               end
             end  
           elseif castable(Kick,object) and isChanneling(object) and kickclass ~= "Hunter" then
             FaceObject(object)
-            cast(Kick,object)
             Debug("Kicked " .. UnitName(object) .. " fast ",38768)
+            return cast(Kick,object)
           end
         end
       end
@@ -899,50 +969,42 @@ Routine:RegisterRoutine(function()
   local function Cooldowns()
     if UnitExists("target") and UnitCanAttack("player","target") and UnitAffectingCombat("player") and not buff(Stealth,"player") and not buff(Vanish,"player") and not mounted() then
 
-    --for object in OM:Objects(OM.Types.Player) do
-    --  if distance("player",object) <= 60 and UnitCanAttack("player",object) then
-    --    if (UnitClass(object) == "Druid" or UnitClass(object) == "Priest" or UnitClass(object) == "Shaman" or UnitClass(object) == "Paladin" or targetclass == "Warlock") then
-          if UnitPower("player") < 90 then
-            if --[[not buff(2893,"target")]] targetclass ~= "Druid" or targetclass ~= "Shaman" then
-              if (not debuff(CheapShot,"target") or debuffduration(CheapShot,"target") >= 1.5) and (not debuff(KidneyShot,"target") or debuffduration(KidneyShot,"target") >= 1.5) then
-                if (debuffduration(11201,"target") >= 2.5 or debuffduration(11398,"target") >= 2.5) and targetclass ~= "Mage" then
-                  if GetInventoryItemID("player",17) ~= wowex.wowexStorage.read("woundid") then
-                    EquipItemByName(wowex.wowexStorage.read("woundid"), 17) -- wound weapon
-                  end
-                elseif (debuffduration(11201,"target") <= 2.5 or debuffduration(11398,"target") <= 2.5) and GetInventoryItemID("player",17) ~= wowex.wowexStorage.read("cripplingid") then
-                  EquipItemByName(wowex.wowexStorage.read("cripplingid"), 17) -- crippling weapon
-                end 
-              end
-            elseif (--[[buff(2893,"target")]] targetclass == "Druid" or targetclass == "Shaman") and GetInventoryItemID("player",17) ~= wowex.wowexStorage.read("woundid") then
-              --for i=1,20 do
-              --local wounddebuffname, _, woundstacks = UnitDebuff("target", i)
-                --if wounddebuffname == "Wound Poison" then
-                  if WoundStacks("target") < 5 and GetInventoryItemID("player",17) ~= wowex.wowexStorage.read("woundid") then
-                    EquipItemByName(wowex.wowexStorage.read("woundid"), 17) -- wound weapon
-                  elseif WoundStacks("target") == 5 and GetInventoryItemID("player",17) ~= wowex.wowexStorage.read("cripplingid") then
-                    EquipItemByName(wowex.wowexStorage.read("cripplingid"), 17) -- crippling weapon
-                  end
-                --end
-              --end
+      if UnitPower("player") < 90 then
+        if targetclass ~= "Mage" then
+          if --[[not buff(2893,"target")]] targetclass ~= "Druid" or targetclass ~= "Shaman" or targetclass ~= "Warrior" or targetclass ~= "Paladin" then
+            if (not debuff(CheapShot,"target") or debuffduration(CheapShot,"target") >= 1.5) and (not debuff(KidneyShot,"target") or debuffduration(KidneyShot,"target") >= 1.5) then
+              if (debuffduration(11201,"target") >= 2.5) then
+                if GetInventoryItemID("player",17) ~= wowex.wowexStorage.read("woundid") then
+                  EquipItemByName(wowex.wowexStorage.read("woundid"), 17) -- wound weapon
+                end
+              elseif (debuffduration(11201,"target") <= 2.5) and GetInventoryItemID("player",17) ~= wowex.wowexStorage.read("cripplingid") then
+                EquipItemByName(wowex.wowexStorage.read("cripplingid"), 17) -- crippling weapon
+              end 
+            end
+          elseif (--[[buff(2893,"target")]] targetclass == "Druid" or targetclass == "Shaman" or targetclass == "Warrior" or targetclass == "Paladin") then
+            if WoundStacks("target") < 5 and GetInventoryItemID("player",17) ~= wowex.wowexStorage.read("woundid") then
+              EquipItemByName(wowex.wowexStorage.read("woundid"), 17) -- wound weapon
+            --elseif WoundStacks("target") == 5 and GetInventoryItemID("player",17) ~= wowex.wowexStorage.read("cripplingid") then
+            --EquipItemByName(wowex.wowexStorage.read("cripplingid"), 17) -- crippling weapon
             end
           end
-        --elseif UnitClass(object) ~= "Druid" or UnitClass(object) ~= "Priest" or UnitClass(object) ~= "Shaman" or UnitClass(object) ~= "Paladin" or targetclass ~= "Warlock" then
-        --  if targetclass == "Mage" and GetInventoryItemID("player",17) ~= wowex.wowexStorage.read("mindnumbingid") then
-        --    EquipItemByName(wowex.wowexStorage.read("mindnumbingid"), 17) -- Mind-numbing weapon
-        --  elseif targetclass ~= "Mage" and GetInventoryItemID("player",17) ~= wowex.wowexStorage.read("cripplingid") then
-        --    EquipItemByName(wowex.wowexStorage.read("cripplingid"), 17) -- crippling weapon
-        --  end
-        --end  
-      --end
-    --end
-
+        elseif targetclass == "Mage" then
+          if (not debuff(CheapShot,"target") or debuffduration(CheapShot,"target") >= 1.5) and (not debuff(KidneyShot,"target") or debuffduration(KidneyShot,"target") >= 1.5) then
+            if (debuffduration(11201,"target") >= 2.5) and GetInventoryItemID("player",17) ~= wowex.wowexStorage.read("mindnumbingid") then
+              EquipItemByName(wowex.wowexStorage.read("mindnumbingid"), 17) -- Mind-numbing weapon
+            elseif debuffduration(11201,"target") <= 2.5 and GetInventoryItemID("player",17) ~= wowex.wowexStorage.read("cripplingid") then
+              EquipItemByName(wowex.wowexStorage.read("cripplingid"), 17) -- crippling weapon
+            end
+          end
+        end
+      end
 
       --if castable(Sprint) and distance("player","target") >= 30 and UnitAffectingCombat("target") and not castable(Shadowstep) then
-      --  cast(Sprint)
+      --  return cast(Sprint)
       --  Debug("Sprint used on " .. UnitName("player"), 11305)
       --end
 
-      if UnitExists("target") and health() <= 10 then
+      if UnitExists("target") and health() <= 10 and instanceType ~= "arena" then
         for offtarget in OM:Objects(OM.Types.Player) do
           if distance("player",offtarget) <= 10 and UnitClass(object) ~= "Warrior" then
             if castable(Gouge,offtarget) and not isProtected(offtarget) then
@@ -950,25 +1012,26 @@ Routine:RegisterRoutine(function()
                 if not UnitTargetingUnit("player",offtarget) and IsFacing(offtarget, "player") and IsFacing("player",offtarget) then
                   local gougetarget = Object(offtarget)
                   FaceObject(gougetarget)
-                  cast(Gouge,gougetarget)
-                  Debug("Gouging off-target " .. UnitName(gougetarget), 11305)
+                  Debug("Gouging off-target " .. UnitName(gougetarget), 11305)                  
+                  return cast(Gouge,gougetarget)
                 end
               end
             end
           end
         end
       end
+
       if trinketUsedBy ~= nil then
         if health("target") <= 90 then
           if ObjectType(trinketUsedBy) == 4 and UnitCanAttack("player",trinketUsedBy) and distance("player",trinketUsedBy) <= 20 then
             if UnitTargetingUnit(trinketUsedBy,"target") and not UnitTargetingUnit("player",trinketUsedBy) and not debuff(Garrote,trinketUsedBy) and not debuff(Rupture,trinketUsedBy) and not IsPoisoned(trinketUsedBy) then
               --FaceObject(trinketUsedBy)
-              --cast(Blind,trinketUsedBy)
+              --return cast(Blind,trinketUsedBy)
               Debug("Consider blinding " .. UnitClass(trinketUsedBy) .. " - " .. UnitName(trinketUsedBy, 2094))
               trinketUsedBy = nil
             elseif UnitTargetingUnit(trinketUsedBy,"player") and not UnitTargetingUnit("player",trinketUsedBy) and not debuff(Garrote,trinketUsedBy) and not debuff(Rupture,trinketUsedBy) and not IsPoisoned(trinketUsedBy) then
               --FaceObject(trinketUsedBy)
-              --cast(Blind,trinketUsedBy)
+              --return cast(Blind,trinketUsedBy)
               Debug("Consider blinding " .. UnitClass(trinketUsedBy) .. " - " .. UnitName(trinketUsedBy, 2094))
               trinketUsedBy = nil
             end
@@ -977,30 +1040,9 @@ Routine:RegisterRoutine(function()
       end
     end  
   end  
-          
---[[          
-        elseif ObjectType(trinketUsedBy) == 4 and UnitCanAttack("player",trinketUsedBy) and distance("player",trinketUsedBy) >= 15 then
-          if (UnitTargetingUnit(trinketUsedBy,"target") and not UnitTargetingUnit("player",trinketUsedBy) and not IsPoisoned(trinketUsedBy)) or (UnitTargetingUnit(trinketUsedBy,"player") and not UnitTargetingUnit("player",trinketUsedBy) and not IsPoisoned(trinketUsedBy)) then
-            cast(Shadowstep,trinketUsedBy)
-          end
-            while(buff(36554, "player") and not debuff(2094,trinketUsedBy)) do
-              FaceObject(trinketUsedBy)
-              MoveForwardStop()
-              StrafeLeftStop()
-              StrafeRightStop()
-              cast(Blind,trinketUsedBy)
-              Debug("Shadowstep + Blind on " .. UnitName(trinketUsedBy), 2094)
-              trinketUsedBy = nil
-              break
-            end
-        end
-      end
-    end
-    ]]
-  
 
  local function Opener()
-    if UnitCanAttack("player","target") and melee() then
+    if UnitCanAttack("player","target") and distance("player","target") <= 5 --[[and not debuff(KidneyShot,"target") and not debuff(CheapShot,"target")]] then
       if buff(Stealth,"player") or buff(Vanish,"player") then
         if not IsBehind("target","player") then
           if castable(CheapShot,"target") and targetclass ~= "Mage" and not buff(34471,"target") and not isElite("target") then
@@ -1008,49 +1050,44 @@ Routine:RegisterRoutine(function()
               if (UnitName("target") == CheapShotTarget) and UnitIsPlayer("target") then
                 if (GetTime() > CheapShotDR) then
                   cast(Premeditation, "target")
-                  cast(CheapShot,"target")
+                  return cast(CheapShot,"target")
                 end
               else
-                cast(Premeditation, "target")
-                cast(CheapShot,"target")
+                cast(Premeditation, "target") 
+                return cast(CheapShot,"target")
               end
             else
               cast(Premeditation, "target")
-              cast(CheapShot,"target")
+              return cast(CheapShot,"target")
             end
           end
         end
         if IsBehind("target","player") then 
           if castable(Ambush,"target") and GetInventoryItemID("player",16) == 28768 then
-            cast(Ambush,"target")
+            cast(Premeditation, "target")
+            return cast(Ambush,"target")
           end
           if castable(Garrote,"target") and (targetclass == "Mage" or targetclass == "Hunter" or isElite("target")) --[[and not debuff(18469, "target")]] and not UnitIsMounted("target") --[[and not debuff(26884,"target")]] then -- fix DRUID STUFF
             cast(Premeditation, "target")
-            cast(Garrote,"target")
-          --elseif castable(Garrote,"target") and targetclass == "Druid" and not debuff(18469, "target") and buff(Vanish,"player") then
-          --  if UnitName("target") == CheapShotTarget then
-          --    if (GetTime() > CheapShotDR) then
-
-          --    end
-          --  end
+            return cast(Garrote,"target")
           end
           if castable(CheapShot,"target") and not buff(34471,"target") and not isElite("target") then
             if CheapShotDR ~= nil then
               if (UnitName("target") == CheapShotTarget) and UnitIsPlayer("target") then
                 if (GetTime() > CheapShotDR) then
                   cast(Premeditation, "target")
-                  cast(CheapShot,"target")
-                elseif (GetTime() < CheapShotDR) then 
+                  return cast(CheapShot,"target")
+                elseif (GetTime() < CheapShotDR) and targetclass ~= "Rogue" then 
                   cast(Premeditation, "target")
-                  cast(Garrote,"target")
+                  return cast(Garrote,"target")
                 end
               else
                 cast(Premeditation, "target")
-                cast(CheapShot,"target")
+                return cast(CheapShot,"target")
               end
             else
               cast(Premeditation, "target")
-              cast(CheapShot,"target")
+              return cast(CheapShot,"target")
             end
           end
         end
@@ -1082,80 +1119,80 @@ Routine:RegisterRoutine(function()
         else TargetLastTarget() end
       end
 
-      if debuff(CheapShot, "target") and not IsBehind("target","player") and castable(Gouge,"target") and debuffduration(1833,"target") < 0.3 then
-        cast(Gouge, "target")
+      if debuff(CheapShot, "target") and not IsBehind("target","player") and castable(Gouge,"target") and debuffduration(1833,"target") < 0.4 then
         Debug("Gouge to chain Cheap shot on " .. UnitName("target"), 38764)
-      elseif debuff(CheapShot, "target") and (IsBehind("target","player") or cooldown(Gouge) ~= 0) and castable(KidneyShot,"target") and debuffduration(1833, "target") < 0.4 --[[and not debuff(18469,"target")]] and not buff(38373,"target") then
+        return cast(Gouge, "target")
+      elseif debuff(CheapShot, "target") and myComboPoints >= 3 and (IsBehind("target","player") or cooldown(Gouge) ~= 0) and castable(KidneyShot,"target") and debuffduration(1833, "target") < 0.4 --[[and not debuff(18469,"target")]] and not buff(38373,"target") then
         if KidneyDR ~= nil then
           if UnitName("target") == KidneyTarget then
             if (GetTime() > KidneyDR) then
-              cast(KidneyShot, "target")
               Debug("Kidney Shot to chain Cheap Shot on " .. UnitName("target"), 8643)
+              return cast(KidneyShot, "target")
             end
           else
-            cast(KidneyShot,"target")
             Debug("Kidney Shot to chain Cheap Shot on " .. UnitName("target"), 8643)
+            return cast(KidneyShot,"target")
           end
         else
-          cast(KidneyShot,"target")
           Debug("Kidney Shot to chain Cheap Shot on " .. UnitName("target"), 8643)
+          return cast(KidneyShot,"target")
         end
       end 
-      if debuff(1330, "target") and castable(KidneyShot, "target") and debuffduration(1330, "target") < 0.3 --[[and not debuff(18469,"target")]] and not buff(38373,"target") then
+      if debuff(1330, "target") and castable(KidneyShot, "target") and myComboPoints >= 3 and debuffduration(1330, "target") < 0.4 --[[and not debuff(18469,"target")]] and not buff(38373,"target") then
         if KidneyDR ~= nil then
           if UnitName("target") == KidneyTarget then
             if (GetTime() > KidneyDR) then
-              cast(KidneyShot, "target")
               Debug("Kidney Shot to chain Garrote on " .. UnitName("target"), 8643)
+              return cast(KidneyShot, "target")
             end
           else
-            cast(KidneyShot,"target")
             Debug("Kidney Shot to chain Garrote on " .. UnitName("target"), 8643)
+            return cast(KidneyShot,"target")
           end
         else
-          cast(KidneyShot,"target")
           Debug("Kidney Shot to chain Garrote on " .. UnitName("target"), 8643)
+          return cast(KidneyShot,"target")
         end
       end 
-      if debuff(Gouge,"target") and castable(KidneyShot,"target") and debuffduration(Gouge,"target") < 0.3 --[[and not debuff(18469,"target")]] and not buff(38373,"target") then
+      if debuff(Gouge,"target") and castable(KidneyShot,"target") and myComboPoints >= 3 and debuffduration(Gouge,"target") < 0.4 --[[and not debuff(18469,"target")]] and not buff(38373,"target") then
         if KidneyDR ~= nil then
           if UnitName("target") == KidneyTarget then
             if (GetTime() > KidneyDR) then
-              cast(KidneyShot, "target")
               Debug("Kidney Shot to chain Gouge on " .. UnitName("target"), 8643)
+              return cast(KidneyShot, "target")
             end
           else
-            cast(KidneyShot,"target")
             Debug("Kidney Shot to chain Gouge on " .. UnitName("target"), 8643)
+            return cast(KidneyShot,"target")
           end
         else
-          cast(KidneyShot,"target")
           Debug("Kidney Shot to chain Gouge on " .. UnitName("target"), 8643)
+          return cast(KidneyShot,"target")
         end
       end 
       --if castable(KidneyShot, "target") and kidneychain >= 0.1 and kidneychain <= 0.4 and not debuff(1330,"target") and myComboPoints >= 4 --[[and (class == "Priest" or class == "Druid" or class == "Shaman" or class == "Warlock" or class == "Mage" or class == "Paladin")]] then
-      --  cast(KidneyShot, "target")
+      --  return cast(KidneyShot, "target")
       --  Debug("Kidney Shot to chain Kick on " .. UnitName("target"), 38764)
       --end
       --if (debuff(18469,"target") or debuffduration(15487,"target") < 0.5) and castable(KidneyShot, "target") and (debuffduration(18469,"target") < 0.3 or debuffduration(15487,"target") < 0.3) and not debuff(CheapShot,"target") and myComboPoints >= 4 and not buff(38373,"target") then
       --  if KidneyDR ~= nil then
       --    if UnitName("target") == KidneyTarget then
       --      if (GetTime() >= KidneyDR) then
-      --        cast(KidneyShot, "target")
+      --        return cast(KidneyShot, "target")
       --        Debug("Kidney to Chain Silence on " .. UnitName("target"), 8643)
       --      end
       --    else
-      --      cast(KidneyShot,"target")
+      --      return cast(KidneyShot,"target")
        --     Debug("Kidney to Chain Silence on " .. UnitName("target"), 8643)
       --    end
      --   else
-     --     cast(KidneyShot,"target")
+     --     return cast(KidneyShot,"target")
      --     Debug("Kidney to Chain Silence on " .. UnitName("target"), 8643)
      --   end
      -- end
       if castable(Eviscerate, "target") and myComboPoints >= 4 and health("target") <= 10 and UnitIsPlayer("target") then
-        cast(Eviscerate, "target")
         Debug("Uncalculated Execute on " .. UnitName("target"), 26865)
+        return cast(Eviscerate, "target")
       end
       if castable(26679, "target") and distance("player","target") >= 15 and myComboPoints >= 1 and not castable(Shadowstep, "target") and (isCasting("target") or isChanneling("target")) then
         if UnitCanAttack("player",object) then
@@ -1166,8 +1203,8 @@ Routine:RegisterRoutine(function()
               local throwfinish = endTime/1000 - GetTime()
               if throwfinish <= 0.5 and castable(26679,"target") then
                 FaceObject("target")
-                cast(26679,"target")
                 Debug("Deadly Throw to Interrupt on " .. UnitName("target"), 26679)
+                return cast(26679,"target")
               end
             end
           end
@@ -1175,25 +1212,25 @@ Routine:RegisterRoutine(function()
       end
       if instanceType == "arena" and UnitExists("target") and partyMembersAround("player", 100) >= 1 then
         ---
-        if cansee("party1","target") or UnitIsDeadOrGhost("party1") then
-          if castable(KidneyShot, "target") and myComboPoints >= 4 and not debuff(KidneyShot, "target") and not debuff(1833, "target") and not debuff(1330, "target") --[[and not debuff(18469, "target")]] and not buff(34471, "target") and not buff(38373,"target") and not buff(1953,"target") and not isElite("target") and (not buff(Evasion,"target") or IsBehind("target","player")) then
+        if ((UnitClass("party1") == "Mage" or UnitClass("party1") == "Hunter" or UnitClass("party1") == "Warrior" or UnitClass("party1") == "Rogue" or UnitClass("party1") == "Warlock") and cansee("party1","target") and UnitTargetingUnit("party1","target")) or ((UnitClass("party1") ~= "Mage" or UnitClass("party1") ~= "Hunter" or UnitClass("party1") ~= "Warrior" or UnitClass("party1") ~= "Rogue" or UnitClass("party1") ~= "Warlock") and cansee("party1","target")) or UnitIsDeadOrGhost("party1") then
+          if castable(KidneyShot, "target") and myComboPoints >= 4 and not debuff(KidneyShot, "target") and not debuff(1833, "target") and not debuff(1330, "target") --[[and not debuff(18469, "target")]] and not buff(34471, "target") and not buff(38373,"target") and not buff(1953,"target") and not isElite("target") and (((cooldown(Vanish) > 0 and cooldown(Preparation) > 0) or (GetTime() < CheapShotDR) or CheapShotDR == nil) or (targetclass ~= "Mage" or targetclass ~= "Hunter")) and (not buff(Evasion,"target") or IsBehind("target","player")) then
             if KidneyDR ~= nil then
               if UnitName("target") == KidneyTarget then
                 if (GetTime() > KidneyDR) then
-                  cast(KidneyShot, "target")
                   Debug("BIG Kidney on " .. UnitName("target"), 8643)
+                  return cast(KidneyShot, "target")
                 end
               else
-                cast(KidneyShot,"target")
                 Debug("BIG Kidney on " .. UnitName("target"), 8643)
+                return cast(KidneyShot,"target")
               end
             else
-              cast(KidneyShot,"target")
               Debug("BIG Kidney on " .. UnitName("target"), 8643) 
+              return cast(KidneyShot,"target")
             end
           end
           ----
-        elseif not (cansee("party1", "target") or UnitIsDeadOrGhost("party1")) then
+        elseif (((UnitClass("party1") == "Mage" or UnitClass("party1") == "Hunter" or UnitClass("party1") == "Warrior" or UnitClass("party1") == "Rogue" or UnitClass("party1") == "Warlock") and not cansee("party1","target") and not UnitTargetingUnit("party1","target")) or ((UnitClass("party1") ~= "Mage" or UnitClass("party1") ~= "Hunter" or UnitClass("party1") ~= "Warrior" or UnitClass("party1") ~= "Rogue" or UnitClass("party1") ~= "Warlock") and not cansee("party1","target")) or UnitIsDeadOrGhost("party1")) then
           if castable(KidneyShot, "target") and myComboPoints >= 4 and not debuff(KidneyShot, "target") and not debuff(1833, "target") and not debuff(1330, "target") --[[and not debuff(18469, "target")]] and not buff(34471, "target") and not buff(1953,"target") and not isElite("target") and (not buff(Evasion,"target") or IsBehind("target","player")) then
             if KidneyDR ~= nil then
               if UnitName("target") == KidneyTarget then
@@ -1213,39 +1250,46 @@ Routine:RegisterRoutine(function()
           if KidneyDR ~= nil then
             if UnitName("target") == KidneyTarget then
               if (GetTime() > KidneyDR) then
-                cast(KidneyShot, "target")
                 Debug("BIG Kidney on " .. UnitName("target"), 8643)
+                return cast(KidneyShot, "target")
               end
             else
-              cast(KidneyShot,"target")
               Debug("BIG Kidney on " .. UnitName("target"), 8643)
+              return cast(KidneyShot,"target")
             end
           else
-            cast(KidneyShot,"target")
             Debug("BIG Kidney on " .. UnitName("target"), 8643)
+            return cast(KidneyShot,"target")
           end
         end
         ----  
       end
 
       --if castable(Rupture, "target") and myComboPoints >= 5 and ((targetclass == "Rogue" or targetclass == "Warrior") and health("target") <= 60) and not debuff(26867, "target") and not debuff(CheapShot, "target") and (not debuff(KidneyShot,"target") or debuffduration(KidneyShot,"target") < 1) then
-      --  cast(Rupture, "target")
+      --  return cast(Rupture, "target")
       --  Debug("Rupture early on " .. UnitName("target"), 38764)
       --end
-      if castable(ExposeArmor, "target") and health("target") >= 40 and myComboPoints >= 4 and (cooldown(KidneyShot) >= 9 or isElite("target")) and (targetclass == "Warlock" or targetclass == "Priest" or targetclass == "Mage" or targetclass == "Druid") then
-        cast(ExposeArmor,"target")
-        Debug("Kidney Miss - Expose Armor " .. UnitName("target"), 26866)
-      elseif castable(Rupture, "target") and myComboPoints >= 4 and (cooldown(KidneyShot) >= 9 or isElite("target")) then
-        cast(Rupture,"target")
-        Debug("Kidney Miss - Rupture " .. UnitName("target"), 26865)
+      if health("target") >= 40 then
+        if castable(ExposeArmor, "target") and health("target") >= 40 and myComboPoints >= 4 and (cooldown(KidneyShot) >= 8 or isElite("target")) and (targetclass == "Warlock" or targetclass == "Priest" or targetclass == "Mage" or targetclass == "Druid") then
+          Debug("Kidney Miss - Expose Armor " .. UnitName("target"), 26866)
+          return cast(ExposeArmor,"target")
+        elseif castable(Rupture, "target") and health("target") >= 40 and myComboPoints >= 4 and (cooldown(KidneyShot) >= 8 or isElite("target")) then
+          Debug("Kidney Miss - Rupture " .. UnitName("target"), 38764)
+          return cast(Rupture,"target")
+        end
+      elseif health("target") < 40 then
+        if castable(Eviscerate, "target") and health("target") < 40 and myComboPoints >= 4 and (cooldown(KidneyShot) >= 8 or isElite("target")) then
+          Debug("Kidney Miss - Eviscerate " .. UnitName("target"), 26865)
+          return cast(Eviscerate,"target")
+        end
       end
       if instanceType == "raid" then
         if castable(SliceAndDice,"target") and myComboPoints <= 5 and myComboPoints >= 3 and (not buff(SliceAndDice, "player") or buffduration(SliceAndDice) <= 2) and not debuff(CheapShot, "target") and not debuff(1330, "target") and health("target") >= 20 and (cooldown(KidneyShot) > 14 or isElite("target")) then
-          cast(SliceAndDice,"target")
+          return cast(SliceAndDice,"target")
         end
       elseif instanceType ~= "raid" then
         if castable(SliceAndDice,"target") and myComboPoints < 3 and myComboPoints >= 2 and (not buff(SliceAndDice, "player") or buffduration(SliceAndDice) <= 2) and not debuff(CheapShot, "target") and not debuff(1330, "target") and health("target") >= 50 and (cooldown(KidneyShot) > 14 or isElite("target")) then
-          cast(SliceAndDice,"target")
+          return cast(SliceAndDice,"target")
         end
       end
 
@@ -1254,17 +1298,17 @@ Routine:RegisterRoutine(function()
       --    if (UnitClass(object) ~= "Druid" or UnitClass(object) ~= "Priest" or UnitClass(object) ~= "Shaman" or UnitClass(object) ~= "Paladin") then
 
       --if castable(Rupture, "target") and myComboPoints >= 3 --[[and UnitPowerType("target") ~= 0]] and not debuff(CheapShot, "target") and not debuff(KidneyShot, "target") and (health("target") >= 40 or isElite("target")) and (cooldown(KidneyShot) > 3 or isElite("target")) then
-      --   cast(Rupture, "target")
+      --   return cast(Rupture, "target")
       --end
       --if castable(SliceAndDice, 'target') and myComboPoints >= 2 and buffduration(SliceAndDice, 'player') <= 1 then
-      --  return cast(SliceAndDice, 'target')
+      --  return return cast(SliceAndDice, 'target')
       --end
       --if castable(Eviscerate, "target") and myComboPoints >= 4 and not castable(KidneyShot, "target") and (cooldown(KidneyShot) > 5 or isElite("target")) then
-      --  cast(Eviscerate, "target")
+      --  return cast(Eviscerate, "target")
       --end
       if castable(26679, "target") and myComboPoints >= 3 and distance("player","target") >= 10 and health("target") <= 8 and not castable(Shadowstep, "target") then
-        cast(26679, "target")
         Debug("Deadly Throw Execute " .. UnitName("target"), 26679)
+        return cast(26679, "target")
       end
     end
   end
@@ -1298,47 +1342,51 @@ Routine:RegisterRoutine(function()
   end
 
   local function Filler()
-    if not buff(Vanish,"player") and not buff(Stealth,"player") and UnitExists("target") and UnitCanAttack("player","target") and (UnitIsPlayer("target") or UnitHealth("target") > 5) then
+    if not buff(Vanish,"player") and not buff(Stealth,"player") and UnitExists("target") and UnitCanAttack("player","target") and (UnitIsPlayer("target") or UnitHealth("target") > 5) and not isNova("target") then
       if buff(36554,"player") and not isCasting("target") and myComboPoints <= 3 and not (debuff(KidneyShot,"target") or debuff(CheapShot,"target")) --[[and (SapHemoCD == nil or GetTime() > SapHemoCD)]] then
-        cast(Hemorrhage,"target")
+        return cast(Hemorrhage,"target")
       end
       if castable(Shiv,"target") and offHandEnchantID == 603 and not buff(2893,"target") and debuff(KidneyShot,"target") and debuffduration(KidneyShot,"target") <= 3 and not buff(1044,"target") and (not debuff(11201,"target") or debuffduration(11201,"target") <= 2) and not buff(6615,"target") and not buff(34471, "target") and not buff(31224, "target") and not buff(20594, "target") and not debuff(27072,"target") and not debuff(116,"target") and not debuff(27087,"target") and not debuff(12486,"target") and myComboPoints < 5 and not isElite("target") then
-        cast(Shiv,"target")
         Debug("Shiv on to finish Kidney " .. UnitName("target"),5938)
+        return cast(Shiv,"target")
       end
-      if castable(Shiv, "target") and offHandEnchantID == 603 and not buff(2893,"target") and not debuff(11201,"target") and not buff(6615,"target") and not buff(34471, "target") and not buff(31224, "target") and not buff(20594, "target") and not debuff(27072,"target") and not debuff(116,"target") and not debuff(27087,"target") and not debuff(12486,"target") and not debuff(CheapShot, "target") and not debuff(KidneyShot, "target") and myComboPoints < 5 and moving("target") and (debuff(26864, "target") or targetclass == "Rogue" or targetclass == "Warrior" or targetclass == "Mage") and not isElite("target") then
-        cast(Shiv, "target")
+      if castable(Shiv, "target") and offHandEnchantID == 603 and not buff(2893,"target") and not debuff(11201,"target") and not buff(6615,"target") and not buff(34471, "target") and not buff(31224, "target") and not buff(20594, "target") and not debuff(27072,"target") and not debuff(116,"target") and not debuff(27087,"target") and not debuff(12486,"target") and not debuff(CheapShot, "target") and not debuff(KidneyShot, "target") and myComboPoints < 5 and moving("target") and (debuff(26864, "target") or targetclass == "Rogue" or targetclass == "Warrior" or targetclass == "Mage") and not targetclass == "Druid" and not isElite("target") then
         Debug("Shiv to Cripple " .. UnitName("target"),5938)
+        return cast(Shiv, "target")
       --elseif castable(Shiv, "target") and offHandEnchantID == 643 and not debuff(11398,"target") and debuff(11201,"target") and (targetclass == "Priest" or targetclass == "Mage") and not buff(34471, "target") and not buff(31224, "target") and not buff(20594, "target") and not debuff(CheapShot, "target") and not debuff(KidneyShot, "target") and myComboPoints < 5 and not isElite("target") then
-      --  cast(Shiv, "target")
+      --  return cast(Shiv, "target")
       --  Debug("Shiv for Mind Numbing on " .. UnitName("target"),5938) 
       end
 
       if instanceType == "arena" or instanceType == "pvp" then
-        if targetclass == "Druid" or targetclass == "Warlock" or targetclass == "Priest" or targetclass == "Shaman" then
+        if targetclass == "Warrior" or targetclass == "Priest" or targetclass == "Shaman" then
           if castable(Shiv,"target") and offHandEnchantID == 2644 and debuff(11201,"target") and not debuff(CheapShot, "target") and myComboPoints < 5 then
             if not buff(2893,"target") and WoundStacks("target") <= 4 then
-              cast(Shiv,"target")
               Debug("Shiv to Wound " .. UnitName("target"), 5938)
+              return cast(Shiv,"target")
             elseif buff(2893,"target") and WoundStacks("target") <= 3 then
-              cast(Shiv,"target")
               Debug("Shiv to Wound " .. UnitName("target"), 5938)
+              return cast(Shiv,"target")
             end
           end
         end
       end
 
-      if castable(GhostlyStrike, "target") and not buff(GhostlyStrike,"player") and health() <= 95 and myComboPoints < 5 --[[and UnitTargetingUnit("target","player") and UnitPowerType("target") ~= 0]] and not debuff(CheapShot,"target") and debuff(26864, "target") and not debuff(KidneyShot,"target") and not isElite("target") then
-        cast(GhostlyStrike, "target")
+      if castable(GhostlyStrike, "target") and not buff(GhostlyStrike,"player") and health() <= 95 and myComboPoints < 5 --[[and UnitTargetingUnit("target","player") and UnitPowerType("target") ~= 0]] and not debuff(CheapShot,"target") --[[and debuff(26864, "target")]] and not debuff(KidneyShot,"target") and not isElite("target") then
+        if UnitClass(ObjectTargetingMe) == "Warrior" or UnitClass(ObjectTargetingMe) == "Rogue" or UnitClass(ObjectTargetingMe) == "Paladin" or UnitClass(ObjectTargetingMe) == "Hunter" or UnitClass(ObjectTargetingMe) == "Druid" then
+          return cast(GhostlyStrike, "target")
+        elseif not UnitIsPlayer("target") then
+          return cast(GhostlyStrike, "target")
+        end
       end
       if castable(Hemorrhage, "target") and debuff(CheapShot,"target") and (myComboPoints < 5 or UnitPower("player") >= 90) --[[and (SapHemoCD == nil or GetTime() > SapHemoCD)]] then
         if not IsBehind("target","player") and debuffduration(CheapShot,"target") > 2 and UnitPower("player") >= 80 then 
-          cast(Hemorrhage,"target")
+          return cast(Hemorrhage,"target")
         elseif IsBehind("target","player") and debuffduration(CheapShot,"target") > 1.2 and UnitPower("player") >= 55 then
-          cast(Hemorrhage,"target")
+          return cast(Hemorrhage,"target")
         end
-      elseif castable(Hemorrhage,"target") and (UnitPower("player") >= 90 or health("target") <= 20 or debuff(KidneyShot, "target") or health("player") <= 20) and not debuff(CheapShot,"target") and (myComboPoints < 5 or UnitPower("player") >= 90) then
-        cast(Hemorrhage,"target")
+      elseif castable(Hemorrhage,"target") and (UnitPower("player") >= 95 or health("target") <= 30 or health("player") <= 20) and not debuff(CheapShot,"target") and (myComboPoints < 5 or UnitPower("player") >= 90) then
+        return cast(Hemorrhage,"target")
       end
     end
   end
@@ -1443,21 +1491,22 @@ Routine:RegisterRoutine(function()
   end
 
   local function pvp()
-    if (instanceType == "arena" or instanceType == "pvp") and castable(Stealth,"player") and not mounted() and not IsPoisoned("player") and not (isCasting("player") or isChanneling("player")) and not (buff(301089,"player") or buff(301091,"player") or buff(34976,"player")) then
-      cast(Stealth)
+    if (instanceType == "arena" or instanceType == "pvp") and castable(Stealth,"player") and not mounted() and not IsPoisoned("player") and not (isCasting("player") or isChanneling("player")) and not (buff(301089,"player") or buff(301091,"player") or buff(34976,"player")) and not buff(Vanish,"player") and not debuff(12867,"player") then
       EquipItemByName(wowex.wowexStorage.read("cripplingid"), 17)
+      return cast(Stealth)
     end
 
     if buff(Vanish,"player") then
       Eval('RunMacroText("/stopattack")', 'player')
     end
 
-    if castable(Preparation,"player") and cooldown(Vanish) > 0 and cooldown(Evasion) >= 0 and cooldown(Shadowstep) >= 0 and cooldown(Sprint) > 0 then
-      cast(Preparation)
+    if castable(Preparation,"player") and cooldown(Vanish) > 0 and not buff(Vanish,"player") --[[and cooldown(Evasion) >= 0 and cooldown(Shadowstep) >= 0 and cooldown(Sprint) >= 0]] then -- add casts for sprint and evasion if Vanish is on CD
+      cast(Sprint,"player")
       Debug("Prep used on " .. UnitName("player"), 14185)
+      return cast(Preparation)
     end
 
-    if instanceType == "pvp" and not mounted() then
+    if instanceType == "pvp" and not mounted() and not buff(Vanish,"player") then
       for flag in OM:Objects(OM.Types.GameObject) do
         if ObjectID(flag) == 328418 or ObjectID(flag) == 328416 or ObjectID(flag) == 367128 then
           if distance("player",flag) <= 5 then
@@ -1487,17 +1536,17 @@ Routine:RegisterRoutine(function()
 
     --for i, object in ipairs(Objects()) do
     for object in OM:Objects(OM.Types.Player) do
-      if distance("player",object) <= 20 and buff(Stealth,object) then
+      if distance("player",object) <= 20 and buff(Stealth,object) and (SAPCD == nil or (GetTime() > SAPCD)) then
         if UnitCanAttack("player",object) and not UnitIsDeadOrGhost(object) then
-          if buff(Stealth,"player") then
+          if buff(Stealth,"player") and not UnitAffectingCombat(object) then
             TargetUnit(object)
             FaceObject(object)
-            cast(Sap,object)
             Debug("Sap".." "..UnitName(object),11297)
+            return cast(Sap,object)
           --elseif not buff(Stealth,"player") and castable(Gouge,object) then
           --  TargetUnit(object)
           --  FaceObject(object)
-          --  cast(Gouge,object)
+          --  return cast(Gouge,object)
           --  Debug("Gouge".." "..UnitName(object),11286)
           end
         end 
@@ -1513,13 +1562,13 @@ Routine:RegisterRoutine(function()
               FaceObject(object)
               TargetUnit(object)
               Eval('RunMacroText("/stopattack")', 'player')
-              cast(26889,"player")
+              return cast(26889,"player")
               Debug("Vanish to Sap " .. UnitName(object), 26889)
             end
             while(buff(26888,"player") and castable(Sap,sapobject) and not UnitAffectingCombat(sapobject)) do
               TargetUnit(sapobject)
               FaceObject(sapobject)
-              cast(Sap,sapobject)
+              return cast(Sap,sapobject)
               if debuff(Sap,sapobject) then
                 TargetLastTarget()
                 break
@@ -1534,44 +1583,46 @@ Routine:RegisterRoutine(function()
   end
   
   local function Hide()
-    if castable(Stealth,"player") and (not buff(Stealth,"player") --[[or buff(Vanish,"player")]]) and not UnitAffectingCombat("player") and UnitCanAttack("player","target") and not melee() and not IsPoisoned("player") and not (buff(301089,"target") or buff(301091,"target") or buff(34976,"target")) then
+    if castable(Stealth,"player") and (not buff(Stealth,"player") --[[or buff(Vanish,"player")]]) and not UnitAffectingCombat("player") and UnitCanAttack("player","target") and not melee() and not IsPoisoned("player") and not debuff(12867,"player") and not (buff(301089,"target") or buff(301091,"target") or buff(34976,"target")) then
       if UnitExists("target") and distance("player","target") <= 35 then
         Dismount()
-        cast(Stealth)
         EquipItemByName(wowex.wowexStorage.read("cripplingid"), 17)
+        return cast(Stealth)
       end
       if wowex.wowexStorage.read('stealtheat') then
         if IsEatingOrDrinking() and castable(Stealth,"player") and not IsPoisoned("player") then
-          cast(Stealth)
+          return cast(Stealth)
         end
       end
     end
   end
   if not UnitIsDeadOrGhost("target") then
-    if Queue() then return true end
+    if #_G.RogueSpellQueue > 0 then
+      Queue()
+    else
+    if Opener() then return true end
     if Dps() then return true end
     if Defensives() then return true end
     if Interrupt() then return true end
     if f:COMBAT_LOG_EVENT_UNFILTERED() then return true end
     if t:UNIT_SPELLCAST_SUCCEEDED() then return true end
-    if Queue() then return true end
+    if Opener() then return true end
     if Cooldowns() then return true end
     if Execute() then return true end
     if pvp() then return true end
     if f:COMBAT_LOG_EVENT_UNFILTERED() then return true end
     if t:UNIT_SPELLCAST_SUCCEEDED() then return true end
-    if Queue() then return true end
     if Opener() then return true end
     if Dps() then return true end
     if Filler() then return true end 
     if Hide() then return true end
     if f:COMBAT_LOG_EVENT_UNFILTERED() then return true end
     if t:UNIT_SPELLCAST_SUCCEEDED() then return true end
-    if Queue() then return true end
     --if Distract() then return true end
     if Poison() then return true end
     if healthstone() then return true end
     if Dismounter() then return true end
+    end
   end
   --if wowex.wowexStorage.read('autoloot') and not UnitAffectingCombat("player") and (not buff(Stealth,"player") or not buff(Vanish,"player")) and InventorySlots() > 2 then
   --  Loot()
