@@ -1,41 +1,3 @@
----@diagnostic disable: undefined-global, lowercase-global
----Ghostly STRIKE ADD CLASS CHECK -- done
---ADD Rupture on rogue as higher priority than Kidney when rogue > 70% health -- done
---Offhand swapping for poisons e.g. druid to stack wound, mindnumbing on casters? DON
---incoming Death coil -> Vanish using Missiles DONEEE
---add faster shiv on melee class DONE
---Add Nigh Invulnerability belt usage DONE
---Add /stop attack and stealth if warrior has crippling
---Add kicks for specific spells
---Add Blinds for objects that aren't your target, and target is <= 30% health DONEE
---Don't overlap kick with kidney shop... Track kick interrupt DONEE
---Add blind on objects who trinket DONE
---Add isDefensive check
---Add isOffensive check
---Add Spell queue over gcd (e.g. SS+Blind) DONNEE
---Add Vanish+SAP on units dropping out of combat DONEE
---Add cloak on mage trinket and targeting me
---Change garrotte check for UnitPowerType to classes DONE
---fix premed DONE
---add blind if they trinket kidney shot
---Add Totem stomping DONE
---ADD CHEAPSHOT IF BLINK on cd DONE
---change totem smack to attack object, so it doesnt change target DONE
---Add gouge on off-target healer
---Change weap
---Add better ambush logic??
---Add C_LossOfControl.GetActiveLossOfControlData event for tracking if I am stunned
---add for loop ghostly strike
---if kidney, and all nova ids, stop attack -- 
---isNova - check for silences, and cansee on bursty
---CHECK DR's for KS DONE
---CHECK DR'S FOR CS DONE
---Change return cast() to return return cast()
---change weapon swaps (dont use mind numbing), and dont use crippling on druid
--- rupture if no healers
--- add cloak if priest comes close -- DONE
--- fix totem retarget -- done?
--- add casts for spring and evasion if Vanish is on CD
 local Tinkr = ...
 local wowex = {}
 local Routine = Tinkr.Routine
@@ -66,50 +28,6 @@ Tinkr:require('scripts.cromulon.interface.uibuilder' , wowex)
 Tinkr:require('scripts.cromulon.interface.buttons' , wowex)
 Tinkr:require('scripts.cromulon.interface.panels' , wowex)
 Tinkr:require('scripts.cromulon.interface.minimap' , wowex)
---[[ Tinkr.classic then
-    ObjectManager.Types = {
-        Object = 0,
-        Item = 1,
-        Container = 2,
-        Unit = 3,
-        Player = 4,
-        ActivePlayer = 5,
-        GameObject = 6,
-        DynamicObject = 7,
-        Corpse = 8,
-        AreaTrigger = 9,
-        SceneObject = 10,
-        ConversationData = 11
-    }
-    ObjectManager.TypeNames = {
-        [0] = "Object",
-        [1] = "Item",
-        [2] = "Container",
-        [3] = "Unit",
-        [4] = "Player",
-        [5] = "ActivePlayer",
-        [6] = "GameObject",
-        [7] = "DynamicObject",
-        [8] = "Corpse",
-        [9] = "AreaTrigger",
-        [10] = "SceneObject",
-        [11] = "ConversationData"
-    }
-    ObjectManager.CreatureTypes = {
-        Beast = 1,
-        Dragonkin = 2,
-        Demon = 3,
-        Elemental = 4,
-        Giant = 5,
-        Undead = 6,
-        Humanoid = 7,
-        Critter = 8,
-        Mechanical = 9,
-        NOT_SPECIFIED = 10,
-        Totem = 11,
-        NON_COMBAT_PET = 12,
-        GAS_CLOUD = 13
-    }]]
 
 function distanceto(object)
   local X1, Y1, Z1 = ObjectPosition('player')
@@ -140,14 +58,8 @@ Draw:Sync(function(draw)
   local targetReach = ObjectCombatReach("target")
   local combatReach = ObjectCombatReach("player")
   local drawclass = UnitClass("target") 
-  --draw:SetColor(draw.colors.white)
-  --draw:Circle(px, py, pz, playerRadius)
-  --draw:Circle(px, py, pz, combatReach)
 
   local rotation = ObjectRotation("player")
-  --local rx, ry, rz = RotateVector(px, py, pz, rotation, playerRadius);
-
-  --draw:Line(px, py, pz, rx, ry, rz)
 
   if UnitExists("target") and UnitCanAttack("player","target") and not UnitIsDeadOrGhost("target") then
     local targetrotation = ObjectRotation("target")
@@ -329,34 +241,6 @@ local t = CreateFrame("Frame")
 t:RegisterEvent("UNIT_SPELLCAST_SUCCEEDED")
 t:RegisterEvent("PLAYER_TARGET_CHANGED")
 
---[[
-local function LogEvent(self, event, ...)
-  if event == "COMBAT_LOG_EVENT_UNFILTERED" or event == "COMBAT_LOG_EVENT" then
-    self:LogEvent_Original(event, CombatLogGetCurrentEventInfo())
-  elseif event == "COMBAT_TEXT_UPDATE" then
-    self:LogEvent_Original(event, (...), GetCurrentCombatTextEventInfo())
-  else
-    self:LogEvent_Original(event, ...)
-  end
-end
-
-local function OnEventTraceLoaded()
-  EventTrace.LogEvent_Original = EventTrace.LogEvent
-  EventTrace.LogEvent = LogEvent
-end
-
-if EventTrace then
-  OnEventTraceLoaded()
-else
-  local frame = CreateFrame("Frame")
-  frame:RegisterEvent("ADDON_LOADED")
-  frame:SetScript("OnEvent", function(self, event, ...)
-    if event == "ADDON_LOADED" and (...) == "Blizzard_EventTrace" then
-      OnEventTraceLoaded()
-      self:UnregisterAllEvents()
-    end
-  end)
-end]]
 
 Routine:RegisterRoutine(function()
   local myComboPoints = GetComboPoints("player","target")
@@ -404,25 +288,6 @@ Routine:RegisterRoutine(function()
     if UnitTargetingUnit("player",queueobject) then
       if #_G.RogueSpellQueue > 0 and cooldown(Hemorrhage) == 0 then
         local current_spell = _G.RogueSpellQueue[1]
-        --[[
-        if _G.RogueSpellQueue[1] == _G.RogueSpellQueue[2] then
-          table.remove(_G.RogueSpellQueue, 2)
-          table.remove(_G.RogueSpellQueue, 3)
-          table.remove(_G.RogueSpellQueue, 4)
-          table.remove(_G.RogueSpellQueue, 5)
-          table.remove(_G.RogueSpellQueue, 6)
-          table.remove(_G.RogueSpellQueue, 7)
-          table.remove(_G.RogueSpellQueue, 8)
-          table.remove(_G.RogueSpellQueue, 9)
-          table.remove(_G.RogueSpellQueue, 10)
-          table.remove(_G.RogueSpellQueue, 11)
-          table.remove(_G.RogueSpellQueue, 12)
-          table.remove(_G.RogueSpellQueue, 13)
-          table.remove(_G.RogueSpellQueue, 14)
-          table.remove(_G.RogueSpellQueue, 15)
-        end
-        ]]
-        --table.remove(_G.RogueSpellQueue, 1)
         counter = #_G.RogueSpellQueue
           for i=0, counter do 
             if _G.RogueSpellQueue[1] == _G.RogueSpellQueue[i] then
@@ -699,15 +564,6 @@ Routine:RegisterRoutine(function()
       end
     end
 
-    --if subevent == "SPELL_AURA_APPLIED" then
-    --  local spellId, spellName = select(12,...)
-    --  if spellId == 1833 and sourceName == myname then
-    --    CheapShotDR = GetTime() + 25
-    --    CheapShotTarget = destName
-    --    print(CheapShotDR)
-    --  end
-    --end
-
     if UnitClass(ObjectTargetingMe) == "Rogue" then
       if subevent == "SPELL_CAST_SUCCESS" then
       local spellId, spellName, _, _, _, _, _, _, _, _, _, _, _ = select(12, ...)
@@ -751,18 +607,6 @@ Routine:RegisterRoutine(function()
         print("Psychic Scream used" .. PsychicScreamCD)
       end
 
---[[
-      if spellName == "Blink" then
-        for object in OM:Objects(OM.Types.Player) do
-          if sourceName == ObjectName(object) then
-            if UnitCanAttack("player",object) then
-              local blinktime = GetTime()
-              blinkcd = blinktime + 15
-            end
-          end
-        end
-      end
-]]
       if spellName == "Vanish" and (sourceName ~= myname) and instanceType ~= "arena" and wowex.wowexStorage.read("fap") then
         for object in OM:Objects(OM.Types.Player) do
           if sourceName == ObjectName(object) then
@@ -865,13 +709,6 @@ Routine:RegisterRoutine(function()
           CheapShotTarget = UnitName("target")
           print("Cheap Shot - " .. CheapShotDR)
         end
-        --if arg3 == 1833 then
-        --  if UnitExists("target") then
-        --    if debuff(CheapShot,"target") then
-        --      CheapShotDR = GetTime() + 25
-        --    end
-        --  end
-        --end
       end
       if event == "PLAYER_TARGET_CHANGED" then 
         for hunter in OM:Objects(OM.Types.Player) do
@@ -903,11 +740,11 @@ Routine:RegisterRoutine(function()
         if UnitCanAttack("player",object) then
           local kickclass, _, _ = UnitClass(object)
           if isCasting(object) and kickclass ~= "Hunter" then
-            if castable(Kick,object) and not UnitTargetingUnit("player",object) and not isProtected(object) then
+            if castable(Kick) and not UnitTargetingUnit("player",object) and not isProtected(object) then
               FaceObject(object)
               Debug("Kicked off-target instantly ",38768)
               return cast(Kick,object)
-            elseif (castable(Kick,object) or castable(Gouge,object)) and UnitTargetingUnit("player",object) and not isProtected(object) then
+            elseif (castable(Kick) or castable(Gouge,object)) and UnitTargetingUnit("player",object) and not isProtected(object) then
               local _, _, _, _, endTime = UnitCastingInfo(object);
               local finish = endTime/1000 - GetTime()
               if finish <= 0.5 and castable(Kick,object) then
@@ -921,7 +758,7 @@ Routine:RegisterRoutine(function()
               --  return cast(Gouge,object)
               --end
             end  
-          elseif castable(Kick,object) and isChanneling(object) and kickclass ~= "Hunter" then
+          elseif castable(Kick) and isChanneling(object) and kickclass ~= "Hunter" then
             local _, _, _, startTimeMS = UnitChannelInfo(object);
             local startTime = startTimeMS/1000 - GetTime()
             if startTime >= 0.3 and castable(Kick,object) then
@@ -984,8 +821,6 @@ Routine:RegisterRoutine(function()
           elseif (--[[buff(2893,"target")]] targetclass == "Druid" or targetclass == "Shaman" or targetclass == "Warrior" or targetclass == "Paladin") then
             if WoundStacks("target") < 5 and GetInventoryItemID("player",17) ~= wowex.wowexStorage.read("woundid") then
               EquipItemByName(wowex.wowexStorage.read("woundid"), 17) -- wound weapon
-            --elseif WoundStacks("target") == 5 and GetInventoryItemID("player",17) ~= wowex.wowexStorage.read("cripplingid") then
-            --EquipItemByName(wowex.wowexStorage.read("cripplingid"), 17) -- crippling weapon
             end
           end
         elseif targetclass == "Mage" then
@@ -1170,26 +1005,6 @@ Routine:RegisterRoutine(function()
           return cast(KidneyShot,"target")
         end
       end 
-      --if castable(KidneyShot, "target") and kidneychain >= 0.1 and kidneychain <= 0.4 and not debuff(1330,"target") and myComboPoints >= 4 --[[and (class == "Priest" or class == "Druid" or class == "Shaman" or class == "Warlock" or class == "Mage" or class == "Paladin")]] then
-      --  return cast(KidneyShot, "target")
-      --  Debug("Kidney Shot to chain Kick on " .. UnitName("target"), 38764)
-      --end
-      --if (debuff(18469,"target") or debuffduration(15487,"target") < 0.5) and castable(KidneyShot, "target") and (debuffduration(18469,"target") < 0.3 or debuffduration(15487,"target") < 0.3) and not debuff(CheapShot,"target") and myComboPoints >= 4 and not buff(38373,"target") then
-      --  if KidneyDR ~= nil then
-      --    if UnitName("target") == KidneyTarget then
-      --      if (GetTime() >= KidneyDR) then
-      --        return cast(KidneyShot, "target")
-      --        Debug("Kidney to Chain Silence on " .. UnitName("target"), 8643)
-      --      end
-      --    else
-      --      return cast(KidneyShot,"target")
-       --     Debug("Kidney to Chain Silence on " .. UnitName("target"), 8643)
-      --    end
-     --   else
-     --     return cast(KidneyShot,"target")
-     --     Debug("Kidney to Chain Silence on " .. UnitName("target"), 8643)
-     --   end
-     -- end
       if castable(Eviscerate, "target") and myComboPoints >= 4 and health("target") <= 10 and UnitIsPlayer("target") then
         Debug("Uncalculated Execute on " .. UnitName("target"), 26865)
         return cast(Eviscerate, "target")
@@ -1313,16 +1128,16 @@ Routine:RegisterRoutine(function()
     end
   end
 
-  --local function Loot()
-  --  for i, object in ipairs(Objects()) do
-  --    if ObjectLootable(object) and ObjectDistance("player",object) < 5 and ObjectType(object) == 3 then
-   --     ObjectInteract(object)
-  --    end
-  --  end
-  --  for i = GetNumLootItems(), 1, -1 do
-  --    LootSlot(i)
-  --  end
-  --end
+  local function Loot()
+    for i, object in ipairs(Objects()) do
+      if ObjectLootable(object) and ObjectDistance("player",object) < 5 and ObjectType(object) == 3 then
+        ObjectInteract(object)
+      end
+    end
+    for i = GetNumLootItems(), 1, -1 do
+      LootSlot(i)
+    end
+  end
 
   local function Project(X, Y, Z, Direction, Distance)
     return X + math.cos(Direction) * Distance, Y + math.sin(Direction) * Distance, Z
@@ -1330,7 +1145,7 @@ Routine:RegisterRoutine(function()
 
   local function Distract()
     --*Throw Distract behind the enemy if its facing us to let us open with a behind opener
-    if buff(Stealth,"player") and UnitCanAttack("player","target") and UnitExists("target") and not UnitAffectingCombat("target") and IsFacing("target", "player") and not UnitIsPlayer("target") and distance("player","target") <= 15 then
+    if buff(Stealth,"player") and UnitCanAttack("player","target") and UnitExists("target") and not UnitAffectingCombat("target") and IsFacing("target", "player") and not UnitIsPlayer("target") and distance("player","target") <= 15 and not isElite("target") then
       local X, Y, Z = ObjectPosition("target")
       local SelfFacing = ObjectRotation("player")
       local ProjX, ProjY, ProjZ = Project(X, Y, Z, SelfFacing, 7)
@@ -1353,9 +1168,6 @@ Routine:RegisterRoutine(function()
       if castable(Shiv, "target") and offHandEnchantID == 603 and not buff(2893,"target") and not debuff(11201,"target") and not buff(6615,"target") and not buff(34471, "target") and not buff(31224, "target") and not buff(20594, "target") and not debuff(27072,"target") and not debuff(116,"target") and not debuff(27087,"target") and not debuff(12486,"target") and not debuff(CheapShot, "target") and not debuff(KidneyShot, "target") and myComboPoints < 5 and moving("target") and (debuff(26864, "target") or targetclass == "Rogue" or targetclass == "Warrior" or targetclass == "Mage") and not targetclass == "Druid" and not isElite("target") then
         Debug("Shiv to Cripple " .. UnitName("target"),5938)
         return cast(Shiv, "target")
-      --elseif castable(Shiv, "target") and offHandEnchantID == 643 and not debuff(11398,"target") and debuff(11201,"target") and (targetclass == "Priest" or targetclass == "Mage") and not buff(34471, "target") and not buff(31224, "target") and not buff(20594, "target") and not debuff(CheapShot, "target") and not debuff(KidneyShot, "target") and myComboPoints < 5 and not isElite("target") then
-      --  return cast(Shiv, "target")
-      --  Debug("Shiv for Mind Numbing on " .. UnitName("target"),5938) 
       end
 
       if instanceType == "arena" or instanceType == "pvp" then
@@ -1552,34 +1364,6 @@ Routine:RegisterRoutine(function()
         end 
       end
     end
-    --[[
-    for object in OM:Objects(OM.Types.Player) do
-      if castable(Vanish) and not IsPoisoned("player") and distance("player",object) <= 15 then 
-        if UnitPower("player") >= 40 and GetUnitName("target") ~= ObjectName(object) and not debuff(Sap,object) and not debuff(CheapShot,"target") then
-          if UnitCanAttack("player",object) and not UnitIsDeadOrGhost(object) and UnitAffectingCombat("player") and not UnitAffectingCombat(object) then
-            if not isProtected(object) then
-              sapobject = Object(object)
-              FaceObject(object)
-              TargetUnit(object)
-              Eval('RunMacroText("/stopattack")', 'player')
-              return cast(26889,"player")
-              Debug("Vanish to Sap " .. UnitName(object), 26889)
-            end
-            while(buff(26888,"player") and castable(Sap,sapobject) and not UnitAffectingCombat(sapobject)) do
-              TargetUnit(sapobject)
-              FaceObject(sapobject)
-              return cast(Sap,sapobject)
-              if debuff(Sap,sapobject) then
-                TargetLastTarget()
-                break
-              end
-              break
-            end
-          end
-        end   
-      end
-    end
-    ]]
   end
   
   local function Hide()
@@ -1618,16 +1402,16 @@ Routine:RegisterRoutine(function()
     if Hide() then return true end
     if f:COMBAT_LOG_EVENT_UNFILTERED() then return true end
     if t:UNIT_SPELLCAST_SUCCEEDED() then return true end
-    --if Distract() then return true end
+    if Distract() then return true end
     if Poison() then return true end
     if healthstone() then return true end
     if Dismounter() then return true end
     end
   end
-  --if wowex.wowexStorage.read('autoloot') and not UnitAffectingCombat("player") and (not buff(Stealth,"player") or not buff(Vanish,"player")) and InventorySlots() > 2 then
-  --  Loot()
-  --  return true 
-  --end
+  if wowex.wowexStorage.read('autoloot') and not UnitAffectingCombat("player") and (not buff(Stealth,"player") or not buff(Vanish,"player")) and InventorySlots() > 2 then
+    Loot()
+    return true 
+  end
 end, Routine.Classes.Rogue, Routine.Specs.Rogue)
 Routine:LoadRoutine(Routine.Specs.Rogue)
 print("\124cffff80ff\124Tinterface\\ChatFrame\\UI-ChatIcon-Blizz:12:20:0:0:32:16:4:28:0:16\124t [Yosh] whispers: Hello, " .. UnitName("player") .. " welcome to my routine :)")
@@ -1734,12 +1518,6 @@ local mytable = {
         { key = "cripplingid", type = "editbox", label = "Crippling Poison OffHand Weapon ID", max = "150" },
         { key = "woundid", type = "editbox", label = "Wound Poison OffHand Weapon ID", max = "150" },
         { key = "mindnumbingid", type = "editbox", label = "Mind Numbing Poison OffHand Weapon ID", max = "150" },
-        --{ key = "heading", type = "heading", color = 'FFF468', text = "Opener" },
-        --{ key = "openerfrontal", width = 175, label = "Frontal", text = wowex.wowexStorage.read("openerfrontal"), type = "dropdown",
-        --options = {"Cheap Shot", "None",} },
-        --{ key = "openerbehind", width = 175, label = "Behind", text = wowex.wowexStorage.read("openerbehind"), type = "dropdown",
-        --options = {"Ambush", "Cheap Shot", "Garrote","None"} },
-        --{ key = "pershealwavepercent", type = "slider", text = "Healing Wave", label = "Healing Wave at", min = 1, max = 100, step = 1 },
         
       },
     },
