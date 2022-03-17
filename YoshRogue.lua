@@ -1512,9 +1512,14 @@ Routine:RegisterRoutine(function()
     end
 
     if castable(Preparation,"player") and cooldown(Vanish) > 0 and not buff(Vanish,"player") --[[and cooldown(Evasion) >= 0 and cooldown(Shadowstep) >= 0 and cooldown(Sprint) >= 0]] then -- add casts for sprint and evasion if Vanish is on CD
-      cast(Sprint,"player")
-      Debug("Prep used on " .. UnitName("player"), 14185)
-      return cast(Preparation)
+      if castable(Sprint) then
+        cast(Sprint,"player")
+      end
+      if not buff(Stealth,"player") and castable(Evasion) then
+        cast(Evasion,"player")
+        Debug("Prep used on " .. UnitName("player"), 14185)
+        return cast(Preparation)
+      end
     end
 
     if instanceType == "pvp" and not mounted() and not buff(Vanish,"player") then
@@ -1594,7 +1599,7 @@ Routine:RegisterRoutine(function()
   end
   
   local function Hide()
-    if castable(Stealth,"player") and (not buff(Stealth,"player") --[[or buff(Vanish,"player")]]) and not UnitAffectingCombat("player") and UnitCanAttack("player","target") and not melee() and not IsPoisoned("player") and not debuff(12867,"player") and not (buff(301089,"target") or buff(301091,"target") or buff(34976,"target")) then
+    if castable(Stealth,"player") and (not buff(Stealth,"player") --[[or buff(Vanish,"player")]]) and not UnitAffectingCombat("player") and UnitCanAttack("player","target") and distance("player","target") > 5 and not IsPoisoned("player") and not debuff(12867,"player") and not (buff(301089,"target") or buff(301091,"target") or buff(34976,"target")) then
       if UnitExists("target") and distance("player","target") <= 35 then
         Dismount()
         EquipItemByName(wowex.wowexStorage.read("cripplingid"), 17)
