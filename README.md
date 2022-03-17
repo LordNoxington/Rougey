@@ -1,5 +1,5 @@
 # Rougey
-An extremely janky Sub Rogue PvP routine. Was made primarly in 2s with a Frost Mage.
+An <strike>extremely<stike/> janky Sub Rogue PvP routine. Was made primarly in 2s with a Frost Mage.
 
 To use spell queue system, macro your abilites like below:<br>
 #showtooltip Cloak of Shadows <br>
